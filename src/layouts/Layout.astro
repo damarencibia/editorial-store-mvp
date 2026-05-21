@@ -1,0 +1,30 @@
+---
+import '../styles.css'
+import CartIcon from '../components/CartIcon.vue'
+import CartDrawer from '../components/CartDrawer.vue'
+---
+
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Bookstore</title>
+  </head>
+  <body class="bg-gray-50 text-gray-900 antialiased min-h-screen">
+    <header class="sticky top-0 z-40 bg-white border-b border-gray-200 shadow-sm">
+      <div class="mx-auto max-w-6xl flex items-center justify-between px-4 py-3">
+        <a href="/" class="text-xl font-bold tracking-tight hover:text-indigo-600 transition-colors">
+          Bookstore
+        </a>
+        <CartIcon client:load />
+      </div>
+    </header>
+
+    <main class="mx-auto max-w-6xl px-4 py-8">
+      <slot />
+    </main>
+
+    <CartDrawer client:load />
+  </body>
+</html>
