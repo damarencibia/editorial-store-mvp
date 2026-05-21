@@ -3,13 +3,12 @@ import Layout from '../layouts/Layout.astro'
 import BookCard from '../components/BookCard.vue'
 import { supabase } from '../lib/supabase'
 
-const { data: books, error } = await supabase
-  .from('books')
-  .select('*')
-  .order('title')
-
-if (error) {
-  console.error('Supabase query error:', error)
+let books = null
+try {
+  const { data } = await supabase.from('books').select('*').order('title')
+  books = data
+} catch (e) {
+  console.error('Failed to fetch books:', e)
 }
 ---
 
