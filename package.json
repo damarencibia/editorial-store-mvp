@@ -7,7 +7,9 @@
     "dev": "astro dev",
     "build": "astro build",
     "preview": "astro preview",
-    "seed": "node scripts/seed.js"
+    "seed": "node scripts/seed.js",
+    "plan": "node scripts/plan.js",
+    "plan:done": "node scripts/plan.js --mark-done"
   },
   "dependencies": {
     "@astrojs/vercel": "^9.0.5",
