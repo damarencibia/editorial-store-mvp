@@ -1,6 +1,3 @@
--- Ejecutar en Supabase SQL Editor
--- Este script crea las tablas necesarias para el MVP
-
 CREATE TABLE IF NOT EXISTS books (
   id          BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
   slug        TEXT UNIQUE NOT NULL,
@@ -21,3 +18,8 @@ CREATE TABLE IF NOT EXISTS orders (
   status            TEXT DEFAULT 'pending',
   created_at        TIMESTAMPTZ DEFAULT NOW()
 );
+
+-- Enable RLS but allow public read access for books
+ALTER TABLE books ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Enable read access for all users" ON public.books
+  FOR SELECT USING (true);

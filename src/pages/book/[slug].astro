@@ -39,7 +39,7 @@ const formattedPrice = `$${(book.price / 100).toFixed(2)}`
       <p class="text-gray-600 leading-relaxed">{book.description}</p>
 
       <AddToCartButton
-        client:load
+        client:only="vue"
         bookId={book.id}
         slug={book.slug}
         title={book.title}

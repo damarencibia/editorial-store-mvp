@@ -1,7 +1,4 @@
--- Seed data para poblar la tabla books
--- Ejecutar DESPUÉS de schema.sql
-
-INSERT INTO books (slug, title, author, description, price, cover_url) VALUES
+﻿INSERT INTO books (slug, title, author, description, price, cover_url) VALUES
 (
   'cien-anos-de-soledad',
   'Cien años de soledad',

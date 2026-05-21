@@ -3,10 +3,14 @@ import Layout from '../layouts/Layout.astro'
 import BookCard from '../components/BookCard.vue'
 import { supabase } from '../lib/supabase'
 
-const { data: books } = await supabase
+const { data: books, error } = await supabase
   .from('books')
   .select('*')
   .order('title')
+
+if (error) {
+  console.error('Supabase query error:', error)
+}
 ---
 
 <Layout>
@@ -14,7 +18,7 @@ const { data: books } = await supabase
     <h1 class="text-3xl font-bold tracking-tight mb-8">Catalog</h1>
     <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
       {books?.map((book) => (
-        <BookCard book={book} client:idle />
+        <BookCard book={book} client:only="vue" />
       ))}
     </div>
     {(!books || books.length === 0) && (

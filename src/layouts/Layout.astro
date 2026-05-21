@@ -17,7 +17,7 @@ import CartDrawer from '../components/CartDrawer.vue'
         <a href="/" class="text-xl font-bold tracking-tight hover:text-indigo-600 transition-colors">
           Bookstore
         </a>
-        <CartIcon client:load />
+        <CartIcon client:only="vue" />
       </div>
     </header>
 
@@ -25,6 +25,6 @@ import CartDrawer from '../components/CartDrawer.vue'
       <slot />
     </main>
 
-    <CartDrawer client:load />
+    <CartDrawer client:only="vue" />
   </body>
 </html>
