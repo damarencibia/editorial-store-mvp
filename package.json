@@ -8,6 +8,7 @@
     "build": "astro build",
     "preview": "astro preview",
     "seed": "node scripts/seed.js",
+    "seed:users": "node scripts/seed-users.js",
     "plan": "node scripts/plan.js",
     "plan:done": "node scripts/plan.js --mark-done"
   },
