@@ -1,0 +1,19 @@
+@theme {
+  --font-heading: "Space Grotesk", sans-serif;
+  --font-body: "Inter", sans-serif;
+  --font-mono: "JetBrains Mono", monospace;
+
+  --color-surface-1: #1E1F1C;
+  --color-surface-2: #272822;
+  --color-surface-3: #2D2E2A;
+
+  --color-accent: #F92672;
+  --color-accent-secondary: #AE81FF;
+
+  --color-text-primary: #F8F8F2;
+  --color-text-muted: #A0A0A0;
+  --color-text-dim: #6E6E6E;
+
+  --color-border: rgba(255, 255, 255, 0.06);
+  --color-border-hover: rgba(255, 255, 255, 0.12);
+}

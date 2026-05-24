@@ -1,6 +1,6 @@
 ---
-import Layout from '../layouts/Layout.astro'
-import BookCard from '../components/BookCard.vue'
+import StoreLayout from '../layouts/StoreLayout.astro'
+import BookCard from '../components/store/BookCard.vue'
 import { supabase } from '../lib/supabase'
 
 let books = null
@@ -12,18 +12,31 @@ try {
 }
 ---
 
-<Layout>
+<StoreLayout>
+  <section class="mb-12">
+    <div class="max-w-2xl">
+      <h1 class="font-heading text-4xl sm:text-5xl font-bold tracking-tight">
+        Libros que
+        <span class="text-accent">inspiran</span>
+      </h1>
+      <p class="mt-4 text-lg text-text-muted leading-relaxed">
+        Descubre nuestra colección curada de títulos que cruzan la frontera entre la cultura
+        clásica y el pensamiento contemporáneo.
+      </p>
+    </div>
+  </section>
+
   <section>
-    <h1 class="text-3xl font-bold tracking-tight mb-8">Catalog</h1>
-    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+    <h2 class="font-heading text-2xl font-semibold mb-6">Catálogo</h2>
+    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
       {books?.map((book) => (
         <BookCard book={book} client:only="vue" />
       ))}
     </div>
     {(!books || books.length === 0) && (
-      <p class="text-gray-400 text-center py-16">
+      <p class="text-text-muted text-center py-16">
         No books found. Run the seed script or insert data in Supabase.
       </p>
     )}
   </section>
-</Layout>
+</StoreLayout>

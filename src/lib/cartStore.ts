@@ -1,6 +1,6 @@
 import { reactive } from 'vue'
 import * as cartLib from './cart'
-import type { CartItem } from './cart'
+import type { CartItem } from './types'
 
 export const cartStore = reactive({
   items: cartLib.getCart() as CartItem[],

@@ -1,0 +1,64 @@
+---
+import BaseLayout from './BaseLayout.astro'
+import CartIcon from '../components/store/CartIcon.vue'
+import CartDrawer from '../components/store/CartDrawer.vue'
+---
+
+<BaseLayout>
+  <slot name="head" slot="head" />
+
+  <header class="sticky top-0 z-40 border-b border-border bg-surface-1/80 backdrop-blur-md">
+    <div class="mx-auto max-w-7xl flex items-center justify-between px-4 sm:px-6 lg:px-8 py-3">
+      <a href="/" class="font-heading text-xl font-bold tracking-tight text-text-primary hover:text-accent transition-colors">
+        Editorial
+      </a>
+
+      <nav class="hidden sm:flex items-center gap-6">
+        <a href="/" class="text-sm text-text-muted hover:text-text-primary transition-colors">Inicio</a>
+        <a href="/catalog" class="text-sm text-text-muted hover:text-text-primary transition-colors">Catálogo</a>
+      </nav>
+
+      <CartIcon client:only="vue" />
+    </div>
+  </header>
+
+  <main class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
+    <slot />
+  </main>
+
+  <footer class="border-t border-border mt-24">
+    <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-12">
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-8">
+        <div class="col-span-2 md:col-span-1">
+          <a href="/" class="font-heading text-lg font-bold text-text-primary hover:text-accent transition-colors">Editorial</a>
+          <p class="mt-2 text-sm text-text-dim">Libros, cultura y tecnología para mentes curiosas.</p>
+        </div>
+        <div>
+          <h4 class="text-xs font-semibold uppercase tracking-wider text-text-muted mb-3">Navegar</h4>
+          <ul class="space-y-2">
+            <li><a href="/" class="text-sm text-text-dim hover:text-text-primary transition-colors">Inicio</a></li>
+            <li><a href="/catalog" class="text-sm text-text-dim hover:text-text-primary transition-colors">Catálogo</a></li>
+          </ul>
+        </div>
+        <div>
+          <h4 class="text-xs font-semibold uppercase tracking-wider text-text-muted mb-3">Legal</h4>
+          <ul class="space-y-2">
+            <li><a href="#" class="text-sm text-text-dim hover:text-text-primary transition-colors">Términos</a></li>
+            <li><a href="#" class="text-sm text-text-dim hover:text-text-primary transition-colors">Privacidad</a></li>
+          </ul>
+        </div>
+        <div>
+          <h4 class="text-xs font-semibold uppercase tracking-wider text-text-muted mb-3">Contacto</h4>
+          <ul class="space-y-2">
+            <li><a href="mailto:hola@editorial.com" class="text-sm text-text-dim hover:text-text-primary transition-colors">hola@editorial.com</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="mt-10 pt-6 border-t border-border text-center text-xs text-text-dim">
+        &copy; {new Date().getFullYear()} Editorial Store. Todos los derechos reservados.
+      </div>
+    </div>
+  </footer>
+
+  <CartDrawer client:only="vue" />
+</BaseLayout>

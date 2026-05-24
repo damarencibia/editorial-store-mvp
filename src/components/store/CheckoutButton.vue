@@ -2,7 +2,7 @@
   <button
     @click="handleCheckout"
     :disabled="loading"
-    class="cursor-pointer w-full rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+    class="cursor-pointer w-full rounded-lg bg-accent px-4 py-2.5 text-sm font-medium text-white hover:bg-accent/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
   >
     {{ loading ? 'Redirecting...' : 'Checkout' }}
   </button>
@@ -10,7 +10,7 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import type { CartItem } from '../lib/cart'
+import type { CartItem } from '../../lib/types'
 
 const props = defineProps<{
   items: CartItem[]

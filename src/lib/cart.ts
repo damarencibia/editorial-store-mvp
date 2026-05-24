@@ -1,12 +1,4 @@
-export interface CartItem {
-  bookId: number
-  slug: string
-  title: string
-  author: string
-  price: number
-  coverUrl: string
-  quantity: number
-}
+import type { CartItem } from './types'
 
 const CART_KEY = 'bookstore_cart'
 

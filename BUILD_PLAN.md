@@ -6,20 +6,20 @@
 
 ## Fase 0 — Fundación (estructura + diseño base)
 
-- [ ] Reorganizar estructura de carpetas según arquitectura planificada
-- [ ] Agregar tipografías (Inter + Space Grotesk) en BaseLayout
-- [ ] Configurar palette Monokai en Tailwind (`@theme`)
-- [ ] Migrar `src/styles.css` → `src/styles/base.css` + `src/styles/theme.css`
-- [ ] Crear `components/shared/Button.vue`
-- [ ] Crear `components/shared/Input.vue`
-- [ ] Crear `components/shared/Badge.vue`
-- [ ] Crear `lib/types.ts` con interfaces compartidas (Book, Order, CartItem, User)
-- [ ] Crear `lib/utils.ts` (formatPrice, cn())
-- [ ] Crear `layouts/BaseLayout.astro`
-- [ ] Crear `layouts/StoreLayout.astro` (Header + Footer rediseñados)
-- [ ] Migrar componentes Vue existentes a `components/store/`
-- [ ] Migrar layouts/pages a nueva estructura
-- [ ] Verificar que `npm run dev` funciona sin errores
+- [x] Reorganizar estructura de carpetas según arquitectura planificada
+- [x] Agregar tipografías (Inter + Space Grotesk) en BaseLayout
+- [x] Configurar palette Monokai en Tailwind (`@theme`)
+- [x] Migrar `src/styles.css` → `src/styles/base.css` + `src/styles/theme.css`
+- [x] Crear `components/shared/Button.vue`
+- [x] Crear `components/shared/Input.vue`
+- [x] Crear `components/shared/Badge.vue`
+- [x] Crear `lib/types.ts` con interfaces compartidas (Book, Order, CartItem, User)
+- [x] Crear `lib/utils.ts` (formatPrice, cn())
+- [x] Crear `layouts/BaseLayout.astro`
+- [x] Crear `layouts/StoreLayout.astro` (Header + Footer rediseñados)
+- [x] Migrar componentes Vue existentes a `components/store/`
+- [x] Migrar layouts/pages a nueva estructura
+- [x] Verificar que `npm run dev` funciona sin errores
 
 **Objetivo:** Proyecto reestructurado, diseño visual oscuro aplicado, tipografía funcionando, todo compila.
 
@@ -118,7 +118,7 @@
 ## Progreso Global
 
 <!-- progress_auto -->
-**Fase 0:** 0/14 — 0%
+**Fase 0:** 14/14 — 100%
 **Fase 1:** 0/11 — 0%
 **Fase 2:** 0/10 — 0%
 **Fase 3:** 0/14 — 0%
@@ -126,4 +126,4 @@
 **Fase 5:** 0/10 — 0%
 <!-- progress_end -->
 
-**Total:** 0/69 tareas completadas
+**Total:** 14/69 tareas completadas

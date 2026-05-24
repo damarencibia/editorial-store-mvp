@@ -1,7 +1,7 @@
 <template>
   <button
     @click="add"
-    class="cursor-pointer inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-indigo-700 transition-colors"
+    class="cursor-pointer inline-flex items-center gap-2 rounded-lg bg-accent px-5 py-2.5 text-sm font-medium text-white hover:bg-accent/90 transition-colors"
   >
     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
       <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z" />
@@ -13,7 +13,7 @@
 </template>
 
 <script setup lang="ts">
-import { cartStore } from '../lib/cartStore'
+import { cartStore } from '../../lib/cartStore'
 
 const props = defineProps<{
   bookId: number
