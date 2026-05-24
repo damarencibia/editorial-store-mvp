@@ -43,12 +43,9 @@
         placeholder="1499"
         :error="errors.price"
       />
-      <FormField
-        id="cover_url"
-        label="URL de portada"
-        type="url"
+      <ImageUpload
         v-model="form.coverUrl"
-        placeholder="https://picsum.photos/seed/book1/300/450"
+        label="Portada"
         :error="errors.coverUrl"
       />
     </div>
@@ -76,6 +73,7 @@
 <script setup lang="ts">
 import { reactive, ref } from 'vue'
 import FormField from './FormField.vue'
+import ImageUpload from './ImageUpload.vue'
 
 interface BookFormData {
   title: string
