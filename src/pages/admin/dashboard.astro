@@ -1,0 +1,30 @@
+---
+import AdminLayout from '../../layouts/AdminLayout.astro'
+---
+
+<AdminLayout>
+  <div class="max-w-5xl">
+    <h1 class="font-heading text-2xl font-bold tracking-tight mb-8">Dashboard</h1>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+      <div class="rounded-lg border border-border bg-surface-2 p-4">
+        <p class="text-xs text-text-muted uppercase tracking-wider font-semibold">Ventas totales</p>
+        <p class="font-heading text-2xl font-bold mt-1">$0</p>
+      </div>
+      <div class="rounded-lg border border-border bg-surface-2 p-4">
+        <p class="text-xs text-text-muted uppercase tracking-wider font-semibold">Órdenes</p>
+        <p class="font-heading text-2xl font-bold mt-1">0</p>
+      </div>
+      <div class="rounded-lg border border-border bg-surface-2 p-4">
+        <p class="text-xs text-text-muted uppercase tracking-wider font-semibold">Clientes</p>
+        <p class="font-heading text-2xl font-bold mt-1">0</p>
+      </div>
+      <div class="rounded-lg border border-border bg-surface-2 p-4">
+        <p class="text-xs text-text-muted uppercase tracking-wider font-semibold">Libros</p>
+        <p class="font-heading text-2xl font-bold mt-1">0</p>
+      </div>
+    </div>
+
+    <p class="text-sm text-text-muted">Las estadísticas se conectarán en la Fase 3.</p>
+  </div>
+</AdminLayout>

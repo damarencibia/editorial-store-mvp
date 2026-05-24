@@ -45,16 +45,16 @@
 
 ## Fase 2 — Autenticación
 
-- [ ] Crear `lib/auth.ts` con helpers (signUp, signIn, signOut, getSession)
-- [ ] Crear `stores/authStore.ts` (Vue reactive, escucha `onAuthStateChange`)
-- [ ] Crear `pages/auth/login.astro`
-- [ ] Crear `pages/auth/register.astro`
-- [ ] Formularios login/register con diseño oscuro + validación
-- [ ] Redirección post-login a página anterior
-- [ ] Mostrar avatar/nombre en header cuando hay sesión
-- [ ] Proteger rutas admin via SSR (`Astro.locals`)
-- [ ] Crear `pages/profile/index.astro` (datos básicos)
-- [ ] Cerrar sesión desde header
+- [x] Crear `lib/auth.ts` con helpers (signUp, signIn, signOut, getSession)
+- [x] Crear `stores/authStore.ts` (Vue reactive, escucha `onAuthStateChange`)
+- [x] Crear `pages/auth/login.astro`
+- [x] Crear `pages/auth/register.astro`
+- [x] Formularios login/register con diseño oscuro + validación
+- [x] Redirección post-login a página anterior
+- [x] Mostrar avatar/nombre en header cuando hay sesión
+- [x] Proteger rutas admin via SSR (`Astro.locals`)
+- [x] Crear `pages/profile/index.astro` (datos básicos)
+- [x] Cerrar sesión desde header
 
 **Objetivo:** Sistema de cuentas funcional, login/register fluido, rutas protegidas.
 
@@ -62,19 +62,17 @@
 
 ## Fase 3 — Admin / CRM
 
-- [ ] Crear `layouts/AdminLayout.astro` (sidebar + topbar)
-- [ ] Crear `components/admin/Sidebar.vue`
-- [ ] Crear `components/admin/StatsCard.vue`
+- [x] Crear `layouts/AdminLayout.astro` (sidebar + topbar + protección auth)
+- [x] Dashboard (`/admin/dashboard`) con placeholder de stats
 - [ ] Crear `components/admin/DataTable.vue` (ordenable, paginada)
 - [ ] Crear `components/admin/FormField.vue`
-- [ ] Dashboard (`/admin`) con stats: ventas totales, órdenes, clientes, libros
-- [ ] CRUD libros: listar (`/admin/books`)
-- [ ] CRUD libros: crear (`/admin/books/new`)
-- [ ] CRUD libros: editar (`/admin/books/[id]`)
+- [ ] CRUD libros: listar (`/admin/books/index.astro`)
+- [ ] CRUD libros: crear (`/admin/books/new.astro`)
+- [ ] CRUD libros: editar (`/admin/books/[id].astro`)
 - [ ] CRUD libros: eliminar con confirmación
-- [ ] Órdenes: listar con filtros por estado (`/admin/orders`)
-- [ ] Órdenes: cambiar estado (pendiente → pagado → enviado)
-- [ ] Clientes: listado básico (`/admin/customers`)
+- [ ] Órdenes: listar con filtros por estado (`/admin/orders.astro`)
+- [ ] Órdenes: cambiar estado
+- [ ] Clientes: listado básico (`/admin/customers.astro`)
 - [ ] Admin responsive: sidebar colapsable en mobile
 
 **Objetivo:** Panel administrativo funcional con gestión completa de productos y órdenes.
@@ -120,10 +118,10 @@
 <!-- progress_auto -->
 **Fase 0:** 14/14 — 100%
 **Fase 1:** 11/11 — 100%
-**Fase 2:** 0/10 — 0%
+**Fase 2:** 10/10 — 100%
 **Fase 3:** 0/14 — 0%
 **Fase 4:** 0/10 — 0%
 **Fase 5:** 0/10 — 0%
 <!-- progress_end -->
 
-**Total:** 25/69 tareas completadas
+**Total:** 35/69 tareas completadas

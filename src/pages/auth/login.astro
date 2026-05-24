@@ -1,0 +1,22 @@
+---
+import StoreLayout from '../../layouts/StoreLayout.astro'
+import LoginForm from '../../components/shared/LoginForm.vue'
+---
+
+<StoreLayout>
+  <title>Iniciar sesión — Editorial</title>
+
+  <div class="flex flex-col items-center justify-center py-12 sm:py-20">
+    <div class="w-full max-w-sm">
+      <h1 class="font-heading text-2xl font-bold tracking-tight mb-1">Iniciar sesión</h1>
+      <p class="text-sm text-text-muted mb-8">Accede a tu cuenta para gestionar tus pedidos.</p>
+
+      <LoginForm client:only="vue" />
+
+      <p class="mt-6 text-center text-sm text-text-muted">
+        ¿No tienes cuenta?
+        <a href="/auth/register" class="text-accent hover:text-accent/80 transition-colors">Regístrate</a>
+      </p>
+    </div>
+  </div>
+</StoreLayout>
