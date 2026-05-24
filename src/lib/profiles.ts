@@ -1,5 +1,6 @@
 import type { User } from '@supabase/supabase-js'
 import { supabase } from './supabase'
+import { getServerSupabase } from './auth'
 
 export interface Profile {
   id: string
@@ -26,8 +27,8 @@ export async function isAdmin(user: User | null): Promise<boolean> {
 }
 
 export async function getServerProfile(
-  serverSupabase: ReturnType<typeof import('./auth')['getServerSupabase']>,
-) {
+  serverSupabase: ReturnType<typeof getServerSupabase>,
+): Promise<Profile | null> {
   const { data: { user } } = await serverSupabase.auth.getUser()
   if (!user) return null
 
@@ -38,4 +39,13 @@ export async function getServerProfile(
     .single()
 
   return data as Profile | null
+}
+
+export async function getServerProfileFromRequest(
+  request: Request,
+  setCookie?: (name: string, value: string, options?: Record<string, unknown>) => void,
+): Promise<{ supabase: ReturnType<typeof getServerSupabase>; profile: Profile | null }> {
+  const serverSupabase = getServerSupabase(request, setCookie)
+  const profile = await getServerProfile(serverSupabase)
+  return { supabase: serverSupabase, profile }
 }

@@ -3,7 +3,7 @@ import BaseLayout from './BaseLayout.astro'
 import { getServerSupabase } from '../lib/auth'
 import { getServerProfile } from '../lib/profiles'
 
-const supabase = getServerSupabase(Astro.cookies as any)
+const supabase = getServerSupabase(Astro.request, Astro.cookies)
 const { data: { user } } = await supabase.auth.getUser()
 
 if (!user) {

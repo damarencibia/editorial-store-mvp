@@ -1,22 +1,21 @@
-import { createServerClient } from '@supabase/ssr'
+import { createServerClient, parseCookieHeader } from '@supabase/ssr'
 import { supabase } from './supabase'
 
 const supabaseUrl = import.meta.env.PUBLIC_SUPABASE_URL!
 const supabaseAnonKey = import.meta.env.PUBLIC_SUPABASE_ANON_KEY!
 
-export function getServerSupabase(cookies: {
-  get: (name: string) => { value: string } | null | undefined
-  set: (name: string, value: string, options?: Record<string, unknown>) => void
-  delete: (name: string, options?: Record<string, unknown>) => void
-}) {
+export function getServerSupabase(
+  request: Request,
+  setCookie?: (name: string, value: string, options?: Record<string, unknown>) => void,
+) {
   return createServerClient(supabaseUrl, supabaseAnonKey, {
     cookies: {
       getAll() {
-        return []
+        return parseCookieHeader(request.headers.get('cookie') ?? '')
       },
       setAll(cookiesToSet) {
         cookiesToSet.forEach(({ name, value, options }) => {
-          cookies.set(name, value, options)
+          setCookie?.(name, value, options)
         })
       },
     },
