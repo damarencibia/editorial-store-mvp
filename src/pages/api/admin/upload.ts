@@ -1,5 +1,6 @@
 import type { APIRoute } from 'astro'
 import { getServerSupabase } from '../../../lib/auth'
+import { serializeCookie, slugify } from '../../../lib/utils'
 
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp']
 const MAX_SIZE = 2 * 1024 * 1024
@@ -67,22 +68,4 @@ export const POST: APIRoute = async ({ request }) => {
   }
 }
 
-function serializeCookie(name: string, value: string, options: Record<string, unknown>): string {
-  let cookie = `${name}=${value}`
-  if (options.path) cookie += `; Path=${options.path}`
-  if (typeof options.maxAge === 'number') cookie += `; Max-Age=${options.maxAge}`
-  if (options.httpOnly) cookie += '; HttpOnly'
-  if (options.sameSite) cookie += `; SameSite=${options.sameSite}`
-  if (options.secure) cookie += '; Secure'
-  return cookie
-}
 
-function slugify(str: string): string {
-  return str
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '')
-    .substring(0, 60)
-}

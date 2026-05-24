@@ -1,39 +1,48 @@
 import type { APIRoute } from 'astro'
-import { supabase } from '../../../../lib/supabase'
+import { getServerSupabase } from '../../../../lib/auth'
+import { serializeCookie } from '../../../../lib/utils'
 
-async function checkAdmin(): Promise<Response | null> {
-  const { data: { user } } = await supabase.auth.getUser()
+async function checkAdmin(
+  serverSupabase: ReturnType<typeof getServerSupabase>,
+  headers: Headers,
+): Promise<Response | null> {
+  const { data: { user } } = await serverSupabase.auth.getUser()
   if (!user) {
-    return new Response(JSON.stringify({ error: 'No autorizado' }), { status: 401 })
+    return new Response(JSON.stringify({ error: 'No autorizado' }), { status: 401, headers })
   }
 
-  const { data: profile } = await supabase
+  const { data: profile } = await serverSupabase
     .from('profiles')
     .select('role')
     .eq('id', user.id)
     .single()
 
   if (profile?.role !== 'admin') {
-    return new Response(JSON.stringify({ error: 'No autorizado' }), { status: 403 })
+    return new Response(JSON.stringify({ error: 'No autorizado' }), { status: 403, headers })
   }
 
   return null
 }
 
 export const PUT: APIRoute = async ({ params, request }) => {
-  const authError = await checkAdmin()
+  const headers = new Headers()
+  const serverSupabase = getServerSupabase(request, (name, value, options) => {
+    headers.append('Set-Cookie', serializeCookie(name, value, options))
+  })
+
+  const authError = await checkAdmin(serverSupabase, headers)
   if (authError) return authError
 
   const id = Number(params.id)
   if (!id) {
-    return new Response(JSON.stringify({ error: 'ID inválido' }), { status: 400 })
+    return new Response(JSON.stringify({ error: 'ID inválido' }), { status: 400, headers })
   }
 
   try {
     const body = await request.json()
     const { title, author, slug, description, price, cover_url } = body
 
-    const { data, error } = await supabase
+    const { data, error } = await serverSupabase
       .from('books')
       .update({ title, author, slug, description, price, cover_url })
       .eq('id', id)
@@ -41,57 +50,65 @@ export const PUT: APIRoute = async ({ params, request }) => {
       .single()
 
     if (error) {
-      return new Response(JSON.stringify({ error: error.message }), { status: 400 })
+      return new Response(JSON.stringify({ error: error.message }), { status: 400, headers })
     }
 
-    return new Response(JSON.stringify(data), { status: 200 })
-  } catch (err) {
-    return new Response(JSON.stringify({ error: 'Error interno' }), { status: 500 })
+    return new Response(JSON.stringify(data), { status: 200, headers })
+  } catch {
+    return new Response(JSON.stringify({ error: 'Error interno' }), { status: 500, headers })
   }
 }
 
-export const DELETE: APIRoute = async ({ params }) => {
-  const authError = await checkAdmin()
+export const DELETE: APIRoute = async ({ params, request }) => {
+  const headers = new Headers()
+  const serverSupabase = getServerSupabase(request, (name, value, options) => {
+    headers.append('Set-Cookie', serializeCookie(name, value, options))
+  })
+
+  const authError = await checkAdmin(serverSupabase, headers)
   if (authError) return authError
 
   const id = Number(params.id)
   if (!id) {
-    return new Response(JSON.stringify({ error: 'ID inválido' }), { status: 400 })
+    return new Response(JSON.stringify({ error: 'ID inválido' }), { status: 400, headers })
   }
 
-  const { error } = await supabase.from('books').delete().eq('id', id)
+  const { error } = await serverSupabase.from('books').delete().eq('id', id)
 
   if (error) {
-    return new Response(JSON.stringify({ error: error.message }), { status: 400 })
+    return new Response(JSON.stringify({ error: error.message }), { status: 400, headers })
   }
 
-  return new Response(JSON.stringify({ deleted: true }), { status: 200 })
+  return new Response(JSON.stringify({ deleted: true }), { status: 200, headers })
 }
 
 export const POST: APIRoute = async ({ params, request }) => {
+  const headers = new Headers()
+  const serverSupabase = getServerSupabase(request, (name, value, options) => {
+    headers.append('Set-Cookie', serializeCookie(name, value, options))
+  })
+
   const url = new URL(request.url)
   const method = url.searchParams.get('_method')
 
   if (method === 'DELETE') {
-    const authError = await checkAdmin()
+    const authError = await checkAdmin(serverSupabase, headers)
     if (authError) return authError
 
     const id = Number(params.id)
     if (!id) {
-      return new Response(JSON.stringify({ error: 'ID inválido' }), { status: 400 })
+      return new Response(JSON.stringify({ error: 'ID inválido' }), { status: 400, headers })
     }
 
-    const { error } = await supabase.from('books').delete().eq('id', id)
+    const { error } = await serverSupabase.from('books').delete().eq('id', id)
 
     if (error) {
-      return new Response(JSON.stringify({ error: error.message }), { status: 400 })
+      return new Response(JSON.stringify({ error: error.message }), { status: 400, headers })
     }
 
-    return new Response(null, {
-      status: 302,
-      headers: { Location: '/admin/books' },
-    })
+    headers.set('Location', '/admin/books')
+    return new Response(null, { status: 302, headers })
   }
 
-  return new Response(JSON.stringify({ error: 'Método no permitido' }), { status: 405 })
+  return new Response(JSON.stringify({ error: 'Método no permitido' }), { status: 405, headers })
 }
