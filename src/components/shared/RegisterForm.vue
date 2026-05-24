@@ -53,7 +53,7 @@ async function handleRegister() {
   success.value = ''
   loading.value = true
 
-  const { error: authError } = await signUp(email.value, password.value)
+  const { data, error: authError } = await signUp(email.value, password.value)
 
   loading.value = false
 
@@ -62,6 +62,11 @@ async function handleRegister() {
     return
   }
 
-  success.value = 'Cuenta creada. Revisa tu email para confirmar.'
+  if (data.session) {
+    success.value = 'Cuenta creada. Redirigiendo...'
+    setTimeout(() => { window.location.href = '/' }, 500)
+  } else {
+    success.value = 'Cuenta creada. Revisa tu email para confirmar.'
+  }
 }
 </script>

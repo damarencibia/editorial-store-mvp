@@ -1,30 +1,48 @@
 ---
 import AdminLayout from '../../layouts/AdminLayout.astro'
+import { getServerSupabase } from '../../lib/auth'
+import { getServerProfile } from '../../lib/profiles'
+
+const supabase = getServerSupabase(Astro.cookies as any)
+const profile = await getServerProfile(supabase)
+if (!profile || profile.role !== 'admin') return Astro.redirect('/')
+
+const { count: bookCount } = await supabase.from('books').select('*', { count: 'exact', head: true })
+const { count: orderCount } = await supabase.from('orders').select('*', { count: 'exact', head: true })
+const { count: customerCount } = await supabase.from('profiles').select('*', { count: 'exact', head: true })
+
+const { data: paidOrders } = await supabase
+  .from('orders')
+  .select('total')
+  .eq('status', 'paid')
+
+const totalSales = (paidOrders ?? []).reduce((sum, o) => sum + (o.total ?? 0), 0)
 ---
 
 <AdminLayout>
+  <title>Dashboard — Admin</title>
+
   <div class="max-w-5xl">
     <h1 class="font-heading text-2xl font-bold tracking-tight mb-8">Dashboard</h1>
 
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
       <div class="rounded-lg border border-border bg-surface-2 p-4">
         <p class="text-xs text-text-muted uppercase tracking-wider font-semibold">Ventas totales</p>
-        <p class="font-heading text-2xl font-bold mt-1">$0</p>
+        <p class="font-heading text-2xl font-bold mt-1">${(totalSales / 100).toFixed(2)}</p>
+        <p class="text-xs text-text-dim mt-1">{paidOrders?.length ?? 0} órdenes pagadas</p>
       </div>
       <div class="rounded-lg border border-border bg-surface-2 p-4">
         <p class="text-xs text-text-muted uppercase tracking-wider font-semibold">Órdenes</p>
-        <p class="font-heading text-2xl font-bold mt-1">0</p>
+        <p class="font-heading text-2xl font-bold mt-1">{orderCount ?? 0}</p>
       </div>
       <div class="rounded-lg border border-border bg-surface-2 p-4">
         <p class="text-xs text-text-muted uppercase tracking-wider font-semibold">Clientes</p>
-        <p class="font-heading text-2xl font-bold mt-1">0</p>
+        <p class="font-heading text-2xl font-bold mt-1">{customerCount ?? 0}</p>
       </div>
       <div class="rounded-lg border border-border bg-surface-2 p-4">
         <p class="text-xs text-text-muted uppercase tracking-wider font-semibold">Libros</p>
-        <p class="font-heading text-2xl font-bold mt-1">0</p>
+        <p class="font-heading text-2xl font-bold mt-1">{bookCount ?? 0}</p>
       </div>
     </div>
-
-    <p class="text-sm text-text-muted">Las estadísticas se conectarán en la Fase 3.</p>
   </div>
 </AdminLayout>

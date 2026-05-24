@@ -1,0 +1,55 @@
+---
+import AdminLayout from '../../../layouts/AdminLayout.astro'
+import DataTable from '../../../components/admin/DataTable.vue'
+import { getServerSupabase } from '../../../lib/auth'
+import { getServerProfile } from '../../../lib/profiles'
+
+const supabase = getServerSupabase(Astro.cookies as any)
+const profile = await getServerProfile(supabase)
+if (!profile || profile.role !== 'admin') return Astro.redirect('/')
+
+const { data: books } = await supabase.from('books').select('*').order('title')
+
+const mappedBooks = (books ?? []).map((b) => {
+  const price = '$' + (b.price / 100).toFixed(2)
+  const date = new Date(b.created_at).toLocaleDateString('es-ES')
+  return { id: b.id, title: b.title, author: b.author, price, created_at: date, slug: b.slug }
+})
+---
+
+<AdminLayout>
+  <title>Libros — Admin</title>
+
+  <div class="max-w-5xl">
+    <div class="flex items-center justify-between mb-6">
+      <h1 class="font-heading text-2xl font-bold tracking-tight">Libros</h1>
+      <a
+        href="/admin/books/new"
+        class="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white hover:bg-accent/90 transition-colors"
+      >
+        + Nuevo libro
+      </a>
+    </div>
+
+    <DataTable
+      client:only="vue"
+      :columns="[
+        { key: 'title', label: 'Título' },
+        { key: 'author', label: 'Autor' },
+        { key: 'price', label: 'Precio' },
+        { key: 'created_at', label: 'Creado' },
+      ]"
+      :rows={mappedBooks}
+      emptyText="No hay libros registrados."
+    >
+      <template #actions="{ row }">
+        <a
+          href={'/admin/books/' + row.id}
+          class="text-xs text-text-muted hover:text-accent transition-colors"
+        >
+          Editar
+        </a>
+      </template>
+    </DataTable>
+  </div>
+</AdminLayout>

@@ -1,0 +1,55 @@
+---
+import AdminLayout from '../../../layouts/AdminLayout.astro'
+import BookForm from '../../../components/admin/BookForm.vue'
+import { getServerSupabase } from '../../../lib/auth'
+import { getServerProfile } from '../../../lib/profiles'
+
+const supabase = getServerSupabase(Astro.cookies as any)
+const profile = await getServerProfile(supabase)
+if (!profile || profile.role !== 'admin') return Astro.redirect('/')
+
+const { id } = Astro.params
+const bookId = Number(id)
+const { data: book } = await supabase.from('books').select('*').eq('id', bookId).single()
+
+if (!book) {
+  return Astro.redirect('/admin/books')
+}
+---
+
+<AdminLayout>
+  <title>Editar libro — Admin</title>
+
+  <div class="max-w-2xl">
+    <div class="flex items-center justify-between mb-6">
+      <div class="flex items-center gap-3">
+        <a href="/admin/books" class="text-text-muted hover:text-text-primary transition-colors">&larr;</a>
+        <h1 class="font-heading text-2xl font-bold tracking-tight">Editar libro</h1>
+      </div>
+      <form
+        method="POST"
+        action={`/api/admin/books/${bookId}?_method=DELETE`}
+        onsubmit="return confirm('¿Eliminar este libro? Esta acción no se puede deshacer.')"
+      >
+        <button
+          type="submit"
+          class="cursor-pointer rounded-lg border border-red-500/20 px-3 py-1.5 text-xs font-medium text-red-400 hover:bg-red-500/5 transition-colors"
+        >
+          Eliminar
+        </button>
+      </form>
+    </div>
+    <BookForm
+      client:only="vue"
+      :initial={{
+        title: book.title,
+        author: book.author,
+        slug: book.slug,
+        description: book.description ?? '',
+        price: String(book.price),
+        coverUrl: book.cover_url ?? '',
+      }}
+      :isEditing="true"
+    />
+  </div>
+</AdminLayout>

@@ -18,8 +18,16 @@ if (!isAdmin) {
   return Astro.redirect('/')
 }
 
+const path = Astro.url.pathname
 const initial = user.email?.charAt(0).toUpperCase() ?? '?'
 const displayName = user.email?.split('@')[0] ?? 'User'
+
+const navItems = [
+  { href: '/admin', label: 'Dashboard', match: (p: string) => p === '/admin' },
+  { href: '/admin/books', label: 'Libros', match: (p: string) => p.startsWith('/admin/books') },
+  { href: '/admin/orders', label: 'Órdenes', match: (p: string) => p === '/admin/orders' },
+  { href: '/admin/customers', label: 'Clientes', match: (p: string) => p === '/admin/customers' },
+]
 ---
 
 <BaseLayout>
@@ -33,30 +41,19 @@ const displayName = user.email?.split('@')[0] ?? 'User'
       </a>
 
       <nav class="flex flex-col gap-1">
-        <a
-          href="/admin"
-          class="rounded-lg px-3 py-2 text-sm text-text-muted hover:text-text-primary hover:bg-surface-3 transition-colors"
-        >
-          Dashboard
-        </a>
-        <a
-          href="/admin/books"
-          class="rounded-lg px-3 py-2 text-sm text-text-muted hover:text-text-primary hover:bg-surface-3 transition-colors"
-        >
-          Libros
-        </a>
-        <a
-          href="/admin/orders"
-          class="rounded-lg px-3 py-2 text-sm text-text-muted hover:text-text-primary hover:bg-surface-3 transition-colors"
-        >
-          Órdenes
-        </a>
-        <a
-          href="/admin/customers"
-          class="rounded-lg px-3 py-2 text-sm text-text-muted hover:text-text-primary hover:bg-surface-3 transition-colors"
-        >
-          Clientes
-        </a>
+        {navItems.map((item) => (
+          <a
+            href={item.href}
+            class:list={[
+              'rounded-lg px-3 py-2 text-sm transition-colors',
+              item.match(path)
+                ? 'bg-accent/10 text-accent font-medium'
+                : 'text-text-muted hover:text-text-primary hover:bg-surface-3',
+            ]}
+          >
+            {item.label}
+          </a>
+        ))}
       </nav>
 
       <div class="mt-auto pt-4 border-t border-border">

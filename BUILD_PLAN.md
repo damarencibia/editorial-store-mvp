@@ -68,16 +68,16 @@
 ## Fase 3 — Admin / CRM
 
 - [x] Crear `layouts/AdminLayout.astro` (sidebar + topbar + protección auth)
-- [x] Dashboard (`/admin/dashboard`) con placeholder de stats
-- [ ] Crear `components/admin/DataTable.vue` (ordenable, paginada)
-- [ ] Crear `components/admin/FormField.vue`
-- [ ] CRUD libros: listar (`/admin/books/index.astro`)
-- [ ] CRUD libros: crear (`/admin/books/new.astro`)
-- [ ] CRUD libros: editar (`/admin/books/[id].astro`)
-- [ ] CRUD libros: eliminar con confirmación
-- [ ] Órdenes: listar con filtros por estado (`/admin/orders.astro`)
-- [ ] Órdenes: cambiar estado
-- [ ] Clientes: listado básico (`/admin/customers.astro`)
+- [x] Dashboard (`/admin/dashboard`) con stats reales desde Supabase
+- [x] Crear `components/admin/DataTable.vue` (ordenable, paginada)
+- [x] Crear `components/admin/FormField.vue`
+- [x] CRUD libros: listar (`/admin/books/index.astro`)
+- [x] CRUD libros: crear (`/admin/books/new.astro`)
+- [x] CRUD libros: editar (`/admin/books/[id].astro`)
+- [x] CRUD libros: eliminar con confirmación
+- [x] Órdenes: listar (`/admin/orders.astro`)
+- [x] Clientes: listado básico (`/admin/customers.astro`)
+- [ ] Órdenes: cambiar estado (pendiente → pagado → enviado)
 - [ ] Admin responsive: sidebar colapsable en mobile
 
 **Objetivo:** Panel administrativo funcional con gestión completa de productos y órdenes.
@@ -124,9 +124,9 @@
 **Fase 0:** 14/14 — 100%
 **Fase 1:** 11/11 — 100%
 **Fase 2:** 15/15 — 100%
-**Fase 3:** 2/12 — 17%
+**Fase 3:** 10/12 — 83%
 **Fase 4:** 0/10 — 0%
 **Fase 5:** 0/10 — 0%
 <!-- progress_end -->
 
-**Total:** 42/72 tareas completadas
+**Total:** 50/72 tareas completadas
