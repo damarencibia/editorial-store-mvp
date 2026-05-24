@@ -4,7 +4,9 @@ import OrdersTable from '../../components/admin/OrdersTable.vue'
 import { getServerSupabase } from '../../lib/auth'
 import { getServerProfile } from '../../lib/profiles'
 
-const supabase = getServerSupabase(Astro.request, Astro.cookies)
+const supabase = getServerSupabase(Astro.request, (name, value, options) => {
+  Astro.cookies.set(name, value, options as any)
+})
 const profile = await getServerProfile(supabase)
 if (!profile || profile.role !== 'admin') return Astro.redirect('/')
 

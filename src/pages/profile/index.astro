@@ -3,7 +3,9 @@ import StoreLayout from '../../layouts/StoreLayout.astro'
 import { getServerSupabase } from '../../lib/auth'
 import { getServerProfile } from '../../lib/profiles'
 
-const supabase = getServerSupabase(Astro.request, Astro.cookies)
+const supabase = getServerSupabase(Astro.request, (name, value, options) => {
+  Astro.cookies.set(name, value, options as any)
+})
 const { data: { user } } = await supabase.auth.getUser()
 
 if (!user) {
