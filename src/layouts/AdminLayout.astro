@@ -1,15 +1,25 @@
 ---
 import BaseLayout from './BaseLayout.astro'
 import { getServerSupabase } from '../lib/auth'
+import { getServerProfile } from '../lib/profiles'
 
 const supabase = getServerSupabase(Astro.cookies as any)
-const { data: { session } } = await supabase.auth.getSession()
+const { data: { user } } = await supabase.auth.getUser()
 
-if (!session) {
+if (!user) {
   return Astro.redirect('/auth/login')
 }
 
-const user = session.user
+const profile = await getServerProfile(supabase)
+
+const isAdmin = profile?.role === 'admin'
+
+if (!isAdmin) {
+  return Astro.redirect('/')
+}
+
+const initial = user.email?.charAt(0).toUpperCase() ?? '?'
+const displayName = user.email?.split('@')[0] ?? 'User'
 ---
 
 <BaseLayout>
@@ -52,10 +62,11 @@ const user = session.user
       <div class="mt-auto pt-4 border-t border-border">
         <div class="flex items-center gap-2 px-3 py-2">
           <div class="flex h-7 w-7 items-center justify-center rounded-full bg-accent/10 text-accent text-xs font-bold uppercase">
-            {user.email?.charAt(0) ?? '?'}
+            {initial}
           </div>
           <div class="flex-1 min-w-0">
-            <p class="text-xs font-medium truncate">{user.email}</p>
+            <p class="text-xs font-medium truncate">{displayName}</p>
+            <span class="text-[10px] uppercase tracking-wider text-accent font-semibold">Admin</span>
           </div>
         </div>
         <form method="POST" action="/api/auth/signout" class="mt-1">

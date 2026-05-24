@@ -55,6 +55,11 @@
 - [x] Proteger rutas admin via SSR (`Astro.locals`)
 - [x] Crear `pages/profile/index.astro` (datos básicos)
 - [x] Cerrar sesión desde header
+- [x] Crear tabla `profiles` en Supabase con columna `role`
+- [x] Trigger auto-creación de perfil al registrarse
+- [x] Crear `lib/profiles.ts` con helpers (getProfile, isAdmin)
+- [x] Actualizar AdminLayout para verificar rol admin
+- [x] Mostrar badge "Admin" en header y perfil
 
 **Objetivo:** Sistema de cuentas funcional, login/register fluido, rutas protegidas.
 
@@ -118,10 +123,10 @@
 <!-- progress_auto -->
 **Fase 0:** 14/14 — 100%
 **Fase 1:** 11/11 — 100%
-**Fase 2:** 10/10 — 100%
-**Fase 3:** 0/14 — 0%
+**Fase 2:** 15/15 — 100%
+**Fase 3:** 2/12 — 17%
 **Fase 4:** 0/10 — 0%
 **Fase 5:** 0/10 — 0%
 <!-- progress_end -->
 
-**Total:** 35/69 tareas completadas
+**Total:** 42/72 tareas completadas
