@@ -102,6 +102,8 @@ const props = withDefaults(defineProps<{
   emptyText?: string
   actions?: Action[]
 }>(), {
+  columns: () => [],
+  rows: () => [],
   perPage: 10,
   emptyText: 'No hay datos disponibles.',
   actions: () => [],
@@ -121,7 +123,8 @@ function toggleSort(key: string) {
 }
 
 const sortedRows = computed(() => {
-  let items = [...props.rows]
+  const rows = Array.isArray(props.rows) ? props.rows : []
+  let items = [...rows]
   if (sortKey.value) {
     items.sort((a, b) => {
       const aVal = a[sortKey.value]
@@ -136,7 +139,10 @@ const sortedRows = computed(() => {
   return items.slice(start, start + props.perPage)
 })
 
-const totalPages = computed(() => Math.ceil(props.rows.length / props.perPage))
+const totalPages = computed(() => {
+  const rows = Array.isArray(props.rows) ? props.rows : []
+  return Math.ceil(rows.length / props.perPage)
+})
 
 const visiblePages = computed(() => {
   const total = totalPages.value
