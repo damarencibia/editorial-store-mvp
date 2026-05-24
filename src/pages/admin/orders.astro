@@ -1,6 +1,6 @@
 ---
 import AdminLayout from '../../layouts/AdminLayout.astro'
-import DataTable from '../../components/admin/DataTable.vue'
+import OrdersTable from '../../components/admin/OrdersTable.vue'
 import { getServerSupabase } from '../../lib/auth'
 import { getServerProfile } from '../../lib/profiles'
 
@@ -12,14 +12,6 @@ const { data: orders } = await supabase
   .from('orders')
   .select('*')
   .order('created_at', { ascending: false })
-
-const mappedOrders = (orders ?? []).map((o) => ({
-  id: o.id,
-  customer_email: o.customer_email,
-  total: '$' + (o.total / 100).toFixed(2),
-  status: o.status === 'paid' ? 'Pagado' : o.status === 'pending' ? 'Pendiente' : o.status === 'shipped' ? 'Enviado' : o.status,
-  created_at: new Date(o.created_at).toLocaleDateString('es-ES'),
-}))
 ---
 
 <AdminLayout>
@@ -27,18 +19,6 @@ const mappedOrders = (orders ?? []).map((o) => ({
 
   <div class="max-w-5xl">
     <h1 class="font-heading text-2xl font-bold tracking-tight mb-6">Órdenes</h1>
-
-    <DataTable
-      client:only="vue"
-      columns={[
-        { key: 'id', label: '#' },
-        { key: 'customer_email', label: 'Cliente' },
-        { key: 'total', label: 'Total' },
-        { key: 'status', label: 'Estado' },
-        { key: 'created_at', label: 'Fecha' },
-      ]}
-      rows={mappedOrders}
-      emptyText="No hay órdenes registradas."
-    />
+    <OrdersTable client:only="vue" :orders={orders ?? []} />
   </div>
 </AdminLayout>

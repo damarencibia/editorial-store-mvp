@@ -77,8 +77,8 @@
 - [x] CRUD libros: eliminar con confirmación
 - [x] Órdenes: listar (`/admin/orders.astro`)
 - [x] Clientes: listado básico (`/admin/customers.astro`)
-- [ ] Órdenes: cambiar estado (pendiente → pagado → enviado)
-- [ ] Admin responsive: sidebar colapsable en mobile
+- [x] Órdenes: cambiar estado con dropdown (pendiente → pagado → enviado)
+- [x] Admin responsive: sidebar colapsable con overlay en mobile
 
 **Objetivo:** Panel administrativo funcional con gestión completa de productos y órdenes.
 
@@ -124,9 +124,9 @@
 **Fase 0:** 14/14 — 100%
 **Fase 1:** 11/11 — 100%
 **Fase 2:** 15/15 — 100%
-**Fase 3:** 10/12 — 83%
+**Fase 3:** 12/12 — 100%
 **Fase 4:** 0/10 — 0%
 **Fase 5:** 0/10 — 0%
 <!-- progress_end -->
 
-**Total:** 50/72 tareas completadas
+**Total:** 52/72 tareas completadas
