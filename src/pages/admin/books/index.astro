@@ -17,6 +17,17 @@ const mappedBooks = (books ?? []).map((b) => {
   const date = new Date(b.created_at).toLocaleDateString('es-ES')
   return { id: b.id, title: b.title, author: b.author, price, created_at: date, slug: b.slug }
 })
+
+const columns = [
+  { key: 'title', label: 'Título' },
+  { key: 'author', label: 'Autor' },
+  { key: 'price', label: 'Precio' },
+  { key: 'created_at', label: 'Creado' },
+]
+
+const actions = [
+  { label: 'Editar', href: '/admin/books/{id}' },
+]
 ---
 
 <AdminLayout>
@@ -35,17 +46,10 @@ const mappedBooks = (books ?? []).map((b) => {
 
     <DataTable
       client:only="vue"
-      :columns="[
-        { key: 'title', label: 'Título' },
-        { key: 'author', label: 'Autor' },
-        { key: 'price', label: 'Precio' },
-        { key: 'created_at', label: 'Creado' },
-      ]"
+      :columns={columns}
       :rows={mappedBooks}
       emptyText="No hay libros registrados."
-      :actions="[
-        { label: 'Editar', href: (row) => '/admin/books/' + row.id },
-      ]"
+      :actions={actions}
     />
   </div>
 </AdminLayout>

@@ -1,83 +1,85 @@
 <template>
-  <div class="overflow-x-auto rounded-lg border border-border">
-    <table class="w-full text-sm">
-      <thead>
-        <tr class="border-b border-border bg-surface-2">
-          <th
-            v-for="col in columns"
-            :key="col.key"
-            class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-text-muted cursor-pointer hover:text-text-primary transition-colors select-none"
-            @click="toggleSort(col.key)"
-          >
-            <span class="inline-flex items-center gap-1">
-              {{ col.label }}
-              <span v-if="sortKey === col.key" class="text-accent text-[10px]">
-                {{ sortDir === 'asc' ? '↑' : '↓' }}
-              </span>
-            </span>
-          </th>
-          <th v-if="actions && actions.length > 0" class="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-text-muted">
-            Acciones
-          </th>
-        </tr>
-      </thead>
-      <tbody class="divide-y divide-border">
-        <tr v-for="row in sortedRows" :key="row.id" class="hover:bg-surface-2/50 transition-colors">
-          <td v-for="col in columns" :key="col.key" class="px-4 py-3 text-text-primary">
-            <slot :name="`cell-${col.key}`" :row="row" :value="row[col.key]">
-              {{ formatCell(row[col.key]) }}
-            </slot>
-          </td>
-          <td v-if="actions && actions.length > 0" class="px-4 py-3 text-right space-x-3">
-            <a
-              v-for="action in actions"
-              :key="action.label"
-              :href="action.href(row)"
-              class="text-xs text-text-muted hover:text-accent transition-colors"
+  <div>
+    <div class="overflow-x-auto rounded-lg border border-border">
+      <table class="w-full text-sm">
+        <thead>
+          <tr class="border-b border-border bg-surface-2">
+            <th
+              v-for="col in columns"
+              :key="col.key"
+              class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-text-muted cursor-pointer hover:text-text-primary transition-colors select-none"
+              @click="toggleSort(col.key)"
             >
-              {{ action.label }}
-            </a>
-          </td>
-        </tr>
-        <tr v-if="rows.length === 0">
-          <td :colspan="columns.length + (actions && actions.length > 0 ? 1 : 0)" class="px-4 py-12 text-center text-text-muted">
-            {{ emptyText }}
-          </td>
-        </tr>
-      </tbody>
-    </table>
-  </div>
+              <span class="inline-flex items-center gap-1">
+                {{ col.label }}
+                <span v-if="sortKey === col.key" class="text-accent text-[10px]">
+                  {{ sortDir === 'asc' ? '↑' : '↓' }}
+                </span>
+              </span>
+            </th>
+            <th v-if="actions && actions.length > 0" class="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-text-muted">
+              Acciones
+            </th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-border">
+          <tr v-for="row in sortedRows" :key="row.id" class="hover:bg-surface-2/50 transition-colors">
+            <td v-for="col in columns" :key="col.key" class="px-4 py-3 text-text-primary">
+              <slot :name="`cell-${col.key}`" :row="row" :value="row[col.key]">
+                {{ formatCell(row[col.key]) }}
+              </slot>
+            </td>
+            <td v-if="actions && actions.length > 0" class="px-4 py-3 text-right space-x-3">
+              <a
+                v-for="action in actions"
+                :key="action.label"
+                :href="resolveHref(action.href, row)"
+                class="text-xs text-text-muted hover:text-accent transition-colors"
+              >
+                {{ action.label }}
+              </a>
+            </td>
+          </tr>
+          <tr v-if="rows.length === 0">
+            <td :colspan="columns.length + (actions && actions.length > 0 ? 1 : 0)" class="px-4 py-12 text-center text-text-muted">
+              {{ emptyText }}
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
 
-  <div v-if="totalPages > 1" class="flex items-center justify-between mt-4">
-    <p class="text-xs text-text-muted">
-      {{ (page - 1) * perPage + 1 }}-{{ Math.min(page * perPage, rows.length) }} de {{ rows.length }}
-    </p>
-    <div class="flex items-center gap-2">
-      <button
-        @click="page = Math.max(1, page - 1)"
-        :disabled="page === 1"
-        class="cursor-pointer rounded-lg border border-border px-3 py-1.5 text-xs text-text-muted hover:text-text-primary hover:border-border-hover disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-      >
-        Anterior
-      </button>
-      <button
-        v-for="p in visiblePages"
-        :key="p"
-        @click="page = p"
-        :class="[
-          'rounded-lg px-3 py-1.5 text-xs transition-colors cursor-pointer',
-          p === page ? 'bg-accent text-white' : 'text-text-muted hover:text-text-primary hover:bg-surface-2',
-        ]"
-      >
-        {{ p }}
-      </button>
-      <button
-        @click="page = Math.min(totalPages, page + 1)"
-        :disabled="page === totalPages"
-        class="cursor-pointer rounded-lg border border-border px-3 py-1.5 text-xs text-text-muted hover:text-text-primary hover:border-border-hover disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-      >
-        Siguiente
-      </button>
+    <div v-if="totalPages > 1" class="flex items-center justify-between mt-4">
+      <p class="text-xs text-text-muted">
+        {{ (page - 1) * perPage + 1 }}-{{ Math.min(page * perPage, rows.length) }} de {{ rows.length }}
+      </p>
+      <div class="flex items-center gap-2">
+        <button
+          @click="page = Math.max(1, page - 1)"
+          :disabled="page === 1"
+          class="cursor-pointer rounded-lg border border-border px-3 py-1.5 text-xs text-text-muted hover:text-text-primary hover:border-border-hover disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+        >
+          Anterior
+        </button>
+        <button
+          v-for="p in visiblePages"
+          :key="p"
+          @click="page = p"
+          :class="[
+            'rounded-lg px-3 py-1.5 text-xs transition-colors cursor-pointer',
+            p === page ? 'bg-accent text-white' : 'text-text-muted hover:text-text-primary hover:bg-surface-2',
+          ]"
+        >
+          {{ p }}
+        </button>
+        <button
+          @click="page = Math.min(totalPages, page + 1)"
+          :disabled="page === totalPages"
+          class="cursor-pointer rounded-lg border border-border px-3 py-1.5 text-xs text-text-muted hover:text-text-primary hover:border-border-hover disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+        >
+          Siguiente
+        </button>
+      </div>
     </div>
   </div>
 </template>
@@ -92,7 +94,7 @@ interface Column {
 
 interface Action {
   label: string
-  href: (row: Record<string, any>) => string
+  href: string
 }
 
 const props = withDefaults(defineProps<{
@@ -152,6 +154,10 @@ const visiblePages = computed(() => {
   if (current >= total - 2) return Array.from({ length: 5 }, (_, i) => total - 4 + i)
   return [current - 2, current - 1, current, current + 1, current + 2]
 })
+
+function resolveHref(template: string, row: Record<string, any>): string {
+  return template.replace(/\{(\w+)\}/g, (_, key) => String(row[key] ?? ''))
+}
 
 function formatCell(value: any): string {
   if (value == null) return '-'
