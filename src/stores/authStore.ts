@@ -10,6 +10,26 @@ export const auth = reactive({
 
 let initialized = false
 
+async function fetchOrCreateProfile(userId: string, email: string | undefined) {
+  const { supabase } = await import('../lib/supabase')
+
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('*')
+    .eq('id', userId)
+    .single()
+
+  if (data) return data as Profile
+
+  const { data: created } = await supabase
+    .from('profiles')
+    .insert({ id: userId, email, role: 'customer' })
+    .select()
+    .single()
+
+  return (created ?? null) as Profile | null
+}
+
 export async function initAuth() {
   if (initialized) return
   initialized = true
@@ -20,12 +40,7 @@ export async function initAuth() {
   auth.user = session?.user ?? null
 
   if (auth.user) {
-    const { data } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', auth.user.id)
-      .single()
-    auth.profile = data as Profile | null
+    auth.profile = await fetchOrCreateProfile(auth.user.id, auth.user.email)
   }
 
   auth.loading = false
@@ -34,12 +49,7 @@ export async function initAuth() {
     auth.user = session?.user ?? null
 
     if (auth.user) {
-      const { data } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', auth.user.id)
-        .single()
-      auth.profile = data as Profile | null
+      auth.profile = await fetchOrCreateProfile(auth.user.id, auth.user.email)
     } else {
       auth.profile = null
     }

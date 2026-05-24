@@ -38,6 +38,11 @@ CREATE POLICY "Admins can update any profile"
     (SELECT role FROM public.profiles WHERE id = auth.uid()) = 'admin'
   );
 
+-- Allow users to insert their own profile (for lazy creation)
+CREATE POLICY "Users can insert own profile"
+  ON public.profiles FOR INSERT
+  WITH CHECK (auth.uid() = id);
+
 -- 4. Trigger: auto-create profile on signup
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS TRIGGER

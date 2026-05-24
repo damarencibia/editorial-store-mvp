@@ -25,7 +25,7 @@
       />
     </div>
 
-    <p v-if="error" class="text-sm text-red-400">{{ error }}</p>
+    <p v-if="error" class="text-sm text-red-400" v-html="error"></p>
     <p v-if="success" class="text-sm text-green-400">{{ success }}</p>
 
     <button
@@ -58,7 +58,11 @@ async function handleRegister() {
   loading.value = false
 
   if (authError) {
-    error.value = authError.message
+    if (authError.message?.toLowerCase().includes('already registered')) {
+      error.value = 'Este email ya está registrado. ¿Quieres <a href="/auth/login" class="text-accent underline">iniciar sesión</a>?'
+    } else {
+      error.value = authError.message
+    }
     return
   }
 

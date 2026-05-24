@@ -34,6 +34,10 @@ CREATE POLICY "Admins can update any profile"
     (SELECT role FROM public.profiles WHERE id = auth.uid()) = 'admin'
   );
 
+CREATE POLICY "Users can insert own profile"
+  ON public.profiles FOR INSERT
+  WITH CHECK (auth.uid() = id);
+
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS TRIGGER
 LANGUAGE plpgsql

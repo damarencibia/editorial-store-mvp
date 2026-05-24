@@ -1,6 +1,6 @@
 <template>
   <div v-if="!auth.loading" class="flex items-center gap-3">
-    <template v-if="auth.user && auth.profile">
+    <template v-if="auth.user">
       <a
         v-if="auth.profile.role === 'admin'"
         href="/admin"
