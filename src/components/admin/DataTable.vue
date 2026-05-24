@@ -16,7 +16,7 @@
               </span>
             </span>
           </th>
-          <th v-if="$slots.actions" class="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-text-muted">
+          <th v-if="actions && actions.length > 0" class="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-text-muted">
             Acciones
           </th>
         </tr>
@@ -28,12 +28,19 @@
               {{ formatCell(row[col.key]) }}
             </slot>
           </td>
-          <td v-if="$slots.actions" class="px-4 py-3 text-right">
-            <slot name="actions" :row="row" />
+          <td v-if="actions && actions.length > 0" class="px-4 py-3 text-right space-x-3">
+            <a
+              v-for="action in actions"
+              :key="action.label"
+              :href="action.href(row)"
+              class="text-xs text-text-muted hover:text-accent transition-colors"
+            >
+              {{ action.label }}
+            </a>
           </td>
         </tr>
         <tr v-if="rows.length === 0">
-          <td :colspan="columns.length + ($slots.actions ? 1 : 0)" class="px-4 py-12 text-center text-text-muted">
+          <td :colspan="columns.length + (actions && actions.length > 0 ? 1 : 0)" class="px-4 py-12 text-center text-text-muted">
             {{ emptyText }}
           </td>
         </tr>
@@ -83,14 +90,21 @@ interface Column {
   label: string
 }
 
+interface Action {
+  label: string
+  href: (row: Record<string, any>) => string
+}
+
 const props = withDefaults(defineProps<{
   columns: Column[]
   rows: Record<string, any>[]
   perPage?: number
   emptyText?: string
+  actions?: Action[]
 }>(), {
   perPage: 10,
   emptyText: 'No hay datos disponibles.',
+  actions: () => [],
 })
 
 const page = ref(1)

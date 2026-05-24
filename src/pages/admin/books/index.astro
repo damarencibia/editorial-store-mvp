@@ -41,15 +41,9 @@ const mappedBooks = (books ?? []).map((b) => {
       ]"
       :rows={mappedBooks}
       emptyText="No hay libros registrados."
-    >
-      <template #actions="{ row }">
-        <a
-          href={'/admin/books/' + row.id}
-          class="text-xs text-text-muted hover:text-accent transition-colors"
-        >
-          Editar
-        </a>
-      </template>
-    </DataTable>
+      :actions="[
+        { label: 'Editar', href: (row) => '/admin/books/' + row.id },
+      ]"
+    />
   </div>
 </AdminLayout>
