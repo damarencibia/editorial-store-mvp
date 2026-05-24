@@ -86,12 +86,12 @@
 
 ## Fase 4 — Carrito y Checkout Mejorados
 
-- [ ] CartDrawer rediseñado con estética oscura
-- [ ] Animación de apertura/cierre del drawer
-- [ ] Sumar/restar items desde el drawer
-- [ ] Eliminar item con confirmación visual
+- [x] CartDrawer rediseñado con estética oscura
+- [x] Animación de apertura/cierre del drawer
+- [x] Sumar/restar items desde el drawer
+- [x] Eliminar item con confirmación visual
 - [ ] Resumen visual del pedido antes de checkout
-- [ ] Sincronizar carrito con localStorage (ya funciona, verificar)
+- [x] Sincronizar carrito con localStorage (ya funciona, verificar)
 - [ ] CartIcon con badge animado
 - [ ] Página de éxito con resumen de orden
 - [ ] Página de cancelación con opción de reintentar
@@ -125,8 +125,8 @@
 **Fase 1:** 11/11 — 100%
 **Fase 2:** 15/15 — 100%
 **Fase 3:** 12/12 — 100%
-**Fase 4:** 0/10 — 0%
+**Fase 4:** 5/10 — 50%
 **Fase 5:** 0/10 — 0%
 <!-- progress_end -->
 
-**Total:** 52/72 tareas completadas
+**Total:** 57/72 tareas completadas
