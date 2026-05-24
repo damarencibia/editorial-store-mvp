@@ -13,6 +13,18 @@ CREATE TABLE IF NOT EXISTS public.profiles (
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
 
 -- 3. RLS policies
+-- Function to check admin role (SECURITY DEFINER to avoid recursive RLS)
+CREATE OR REPLACE FUNCTION public.is_admin()
+RETURNS boolean
+LANGUAGE sql
+SECURITY DEFINER
+AS $$
+  SELECT EXISTS (
+    SELECT 1 FROM public.profiles
+    WHERE id = auth.uid() AND role = 'admin'
+  );
+$$;
+
 -- Allow users to read their own profile
 CREATE POLICY "Users can read own profile"
   ON public.profiles FOR SELECT
@@ -24,19 +36,15 @@ CREATE POLICY "Users can update own profile"
   USING (auth.uid() = id)
   WITH CHECK (auth.uid() = id);
 
--- Allow admins to read all profiles (uses security definer function to avoid recursion)
+-- Allow admins to read all profiles
 CREATE POLICY "Admins can read all profiles"
   ON public.profiles FOR SELECT
-  USING (
-    (SELECT role FROM public.profiles WHERE id = auth.uid()) = 'admin'
-  );
+  USING (public.is_admin());
 
 -- Allow admins to update any profile
 CREATE POLICY "Admins can update any profile"
   ON public.profiles FOR UPDATE
-  USING (
-    (SELECT role FROM public.profiles WHERE id = auth.uid()) = 'admin'
-  );
+  USING (public.is_admin());
 
 -- Allow users to insert their own profile (for lazy creation)
 CREATE POLICY "Users can insert own profile"
