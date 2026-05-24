@@ -21,11 +21,16 @@ async function fetchOrCreateProfile(userId: string, email: string | undefined) {
 
   if (data) return data as Profile
 
-  const { data: created } = await supabase
+  const { data: created, error: insertError } = await supabase
     .from('profiles')
     .insert({ id: userId, email, role: 'customer' })
     .select()
     .single()
+
+  if (insertError) {
+    console.error('Error creating profile:', insertError)
+    return null
+  }
 
   return (created ?? null) as Profile | null
 }
