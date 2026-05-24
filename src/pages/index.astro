@@ -4,38 +4,83 @@ import BookCard from '../components/store/BookCard.vue'
 import { supabase } from '../lib/supabase'
 
 let books = null
+let error = null
 try {
-  const { data } = await supabase.from('books').select('*').order('title')
+  const { data, error: err } = await supabase.from('books').select('*').order('title')
   books = data
+  error = err
 } catch (e) {
-  console.error('Failed to fetch books:', e)
+  error = e instanceof Error ? e.message : 'Failed to load books'
 }
 ---
 
 <StoreLayout>
-  <section class="mb-12">
-    <div class="max-w-2xl">
-      <h1 class="font-heading text-4xl sm:text-5xl font-bold tracking-tight">
-        Libros que
-        <span class="text-accent">inspiran</span>
-      </h1>
-      <p class="mt-4 text-lg text-text-muted leading-relaxed">
-        Descubre nuestra colección curada de títulos que cruzan la frontera entre la cultura
-        clásica y el pensamiento contemporáneo.
-      </p>
+  <title>Editorial — Libros, cultura y tecnología</title>
+  <meta property="og:title" slot="head" content="Editorial — Libros, cultura y tecnología" />
+  <meta property="og:description" slot="head" content="Descubre nuestra colección curada de libros que cruzan la frontera entre la cultura clásica y el pensamiento contemporáneo." />
+  <meta property="og:type" slot="head" content="website" />
+
+  <section class="relative mb-16 sm:mb-24 overflow-hidden rounded-xl sm:rounded-2xl bg-surface-2 border border-border">
+    <div class="relative z-10 px-6 sm:px-10 lg:px-14 py-16 sm:py-20 lg:py-24">
+      <div class="max-w-2xl">
+        <p class="text-xs font-semibold uppercase tracking-widest text-accent mb-4">
+          Editorial Store
+        </p>
+        <h1 class="font-heading text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight leading-tight">
+          Libros que
+          <span class="text-accent">inspiran</span>
+          <br />mentes curiosas
+        </h1>
+        <p class="mt-5 text-base sm:text-lg text-text-muted leading-relaxed max-w-lg">
+          Descubre nuestra colección curada de títulos que cruzan la frontera entre la cultura
+          clásica y el pensamiento contemporáneo.
+        </p>
+        <div class="mt-8 flex flex-wrap gap-3">
+          <a
+            href="#catalog"
+            class="inline-flex items-center gap-2 rounded-lg bg-accent px-6 py-3 text-sm font-medium text-white hover:bg-accent/90 transition-all duration-200"
+          >
+            Explorar catálogo
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="5" y1="12" x2="19" y2="12" />
+              <polyline points="12 5 19 12 12 19" />
+            </svg>
+          </a>
+          <a
+            href="#catalog"
+            class="inline-flex items-center gap-2 rounded-lg border border-border px-6 py-3 text-sm font-medium text-text-muted hover:text-text-primary hover:border-border-hover transition-all duration-200"
+          >
+            Ver todos
+          </a>
+        </div>
+      </div>
     </div>
+    <div class="absolute top-0 right-0 w-1/3 h-full bg-gradient-to-l from-accent/5 to-transparent pointer-events-none" />
   </section>
 
-  <section>
-    <h2 class="font-heading text-2xl font-semibold mb-6">Catálogo</h2>
-    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
-      {books?.map((book) => (
-        <BookCard book={book} client:only="vue" />
-      ))}
+  <section id="catalog">
+    <div class="flex items-center justify-between mb-6">
+      <h2 class="font-heading text-2xl font-semibold">Catálogo</h2>
+      {books && <p class="text-sm text-text-muted">{books.length} libros</p>}
     </div>
-    {(!books || books.length === 0) && (
+
+    {error && (
+      <div class="rounded-lg border border-red-500/20 bg-red-500/5 px-5 py-4 text-sm text-red-400 mb-8">
+        Error al cargar el catálogo. Intenta de nuevo más tarde.
+      </div>
+    )}
+
+    {!error && books && books.length > 0 && (
+      <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6 animate-in">
+        {books.map((book) => (
+          <BookCard book={book} client:only="vue" />
+        ))}
+      </div>
+    )}
+
+    {!error && (!books || books.length === 0) && (
       <p class="text-text-muted text-center py-16">
-        No books found. Run the seed script or insert data in Supabase.
+        No hay libros disponibles. Vuelve pronto.
       </p>
     )}
   </section>

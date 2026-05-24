@@ -27,17 +27,17 @@
 
 ## Fase 1 — Tienda Pública Premium
 
-- [ ] Rediseñar Home con Hero section (título, subtítulo, CTA)
-- [ ] Catálogo con grid responsivo (1→2→4 cols)
-- [ ] BookCard rediseñado con estética oscura
-- [ ] Página de detalle de libro con layout premium
-- [ ] Footer profesional (columnas: redes, contacto, legal, newsletter)
-- [ ] Estado vacío para catálogo sin libros
-- [ ] Estado de error para fallos de conexión a Supabase
-- [ ] Animaciones suaves (fade-in en cards, hover en botones)
-- [ ] SEO: title + description + Open Graph por página
-- [ ] View Transitions para navegación fluida
-- [ ] Página 404 personalizada
+- [x] Catálogo con grid responsivo (1→2→4 cols)
+- [x] BookCard rediseñado con estética oscura
+- [x] Página de detalle de libro con layout premium
+- [x] Footer profesional (columnas: redes, contacto, legal, newsletter)
+- [x] Estado vacío para catálogo sin libros
+- [x] Mejorar Hero section (CTA, gradiente decorativo, tipografía)
+- [x] Estado de error para fallos de conexión a Supabase
+- [x] Animaciones suaves (fade-in con stagger en cards)
+- [x] SEO: title + description + Open Graph por página
+- [x] View Transitions para navegación fluida
+- [x] Página 404 personalizada
 
 **Objetivo:** Tienda pública con look profesional, experiencia fluida, SEO optimizado.
 
@@ -119,11 +119,11 @@
 
 <!-- progress_auto -->
 **Fase 0:** 14/14 — 100%
-**Fase 1:** 0/11 — 0%
+**Fase 1:** 11/11 — 100%
 **Fase 2:** 0/10 — 0%
 **Fase 3:** 0/14 — 0%
 **Fase 4:** 0/10 — 0%
 **Fase 5:** 0/10 — 0%
 <!-- progress_end -->
 
-**Total:** 14/69 tareas completadas
+**Total:** 25/69 tareas completadas

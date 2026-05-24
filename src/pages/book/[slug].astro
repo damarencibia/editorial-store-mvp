@@ -19,8 +19,14 @@ const formattedPrice = `$${(book.price / 100).toFixed(2)}`
 ---
 
 <StoreLayout>
+  <title>{book.title} — Editorial</title>
+  <meta property="og:title" slot="head" content={`${book.title} — Editorial`} />
+  <meta property="og:description" slot="head" content={book.description ?? ''} />
+  <meta property="og:type" slot="head" content="book" />
+  {book.cover_url && <meta property="og:image" slot="head" content={book.cover_url} />}
+
   <article class="grid md:grid-cols-[400px_1fr] gap-8 lg:gap-12">
-    <div class="aspect-[2/3] overflow-hidden rounded-lg bg-surface-2 border border-border mx-auto md:mx-0 max-w-[400px] w-full">
+    <div class="aspect-[2/3] overflow-hidden rounded-lg bg-surface-2 border border-border mx-auto md:mx-0 max-w-[400px] w-full animate-in">
       <img
         src={book.cover_url}
         alt={book.title}
@@ -28,7 +34,7 @@ const formattedPrice = `$${(book.price / 100).toFixed(2)}`
       />
     </div>
 
-    <div class="flex flex-col gap-6">
+    <div class="flex flex-col gap-6 animate-in">
       <div>
         <p class="text-sm text-text-muted mb-1">{book.author}</p>
         <h1 class="font-heading text-3xl sm:text-4xl font-bold tracking-tight">{book.title}</h1>
