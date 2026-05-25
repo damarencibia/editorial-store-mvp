@@ -7,8 +7,11 @@
             <th
               v-for="col in columns"
               :key="col.key"
-              class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-text-muted cursor-pointer hover:text-text-primary transition-colors select-none"
-              @click="toggleSort(col.key)"
+              :class="[
+                'px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-text-muted select-none transition-colors',
+                col.type !== 'image' ? 'cursor-pointer hover:text-text-primary' : ''
+              ]"
+              @click="col.type !== 'image' && toggleSort(col.key)"
             >
               <span class="inline-flex items-center gap-1">
                 {{ col.label }}
@@ -26,7 +29,13 @@
           <tr v-for="row in sortedRows" :key="row.id" class="hover:bg-surface-2/50 transition-colors">
             <td v-for="col in columns" :key="col.key" class="px-4 py-3 text-text-primary">
               <slot :name="`cell-${col.key}`" :row="row" :value="row[col.key]">
-                {{ formatCell(row[col.key]) }}
+                <img
+                  v-if="col.type === 'image' && row[col.key]"
+                  :src="row[col.key]"
+                  alt="Portada"
+                  class="w-10 h-14 object-cover rounded"
+                />
+                <span v-else>{{ formatCell(row[col.key]) }}</span>
               </slot>
             </td>
             <td v-if="actions && actions.length > 0" class="px-4 py-3 text-right space-x-3">
@@ -90,6 +99,7 @@ import { ref, computed, onMounted } from 'vue'
 interface Column {
   key: string
   label: string
+  type?: 'text' | 'image'
 }
 
 interface Action {

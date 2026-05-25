@@ -15,10 +15,11 @@ const { data: books } = await supabase.from('books').select('*').order('title')
 const mappedBooks = (books ?? []).map((b) => {
   const price = '$' + (b.price / 100).toFixed(2)
   const date = new Date(b.created_at).toLocaleDateString('es-ES')
-  return { id: b.id, title: b.title, author: b.author, price, created_at: date, slug: b.slug }
+  return { id: b.id, title: b.title, author: b.author, price, created_at: date, slug: b.slug, cover: b.cover_url }
 })
 
 const columns = [
+  { key: 'cover', label: 'Portada', type: 'image' },
   { key: 'title', label: 'Título' },
   { key: 'author', label: 'Autor' },
   { key: 'price', label: 'Precio' },
