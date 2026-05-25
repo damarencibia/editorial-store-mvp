@@ -33,7 +33,8 @@
                   v-if="col.type === 'image' && row[col.key]"
                   :src="row[col.key]"
                   alt="Portada"
-                  class="w-10 h-14 object-cover rounded"
+                  class="w-10 h-14 object-cover rounded cursor-pointer"
+                  @click.stop="previewImage = row[col.key]"
                 />
                 <span v-else>{{ formatCell(row[col.key]) }}</span>
               </slot>
@@ -90,11 +91,26 @@
         </button>
       </div>
     </div>
+
+    <Teleport to="body">
+      <div
+        v-if="previewImage"
+        class="fixed inset-0 z-50 flex items-center justify-center bg-black/70 cursor-pointer"
+        @click="previewImage = null"
+      >
+        <img
+          :src="previewImage"
+          alt="Portada"
+          class="max-w-[85vw] max-h-[85vh] object-contain rounded-lg shadow-2xl cursor-default"
+          @click.stop
+        />
+      </div>
+    </Teleport>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 
 interface Column {
   key: string
@@ -114,6 +130,15 @@ const props = withDefaults(defineProps<{
   perPage: 10,
   emptyText: 'No hay datos disponibles.',
 })
+
+const previewImage = ref<string | null>(null)
+
+function onKeyDown(e: KeyboardEvent) {
+  if (e.key === 'Escape') previewImage.value = null
+}
+
+onMounted(() => document.addEventListener('keydown', onKeyDown))
+onUnmounted(() => document.removeEventListener('keydown', onKeyDown))
 
 const columns = ref<Column[]>([])
 const rows = ref<Record<string, any>[]>([])
