@@ -1,6 +1,6 @@
 import type { APIRoute } from 'astro'
 import { getServerSupabase } from '../../../../lib/auth'
-import { serializeCookie } from '../../../../lib/utils'
+import { serializeCookie, slugify } from '../../../../lib/utils'
 
 async function checkAdmin(
   serverSupabase: ReturnType<typeof getServerSupabase>,
@@ -40,16 +40,24 @@ export const PUT: APIRoute = async ({ params, request }) => {
 
   try {
     const body = await request.json()
-    const { title, author, slug, description, price, cover_url, category_id } = body
+    const name = body.name?.trim()
+    if (!name) {
+      return new Response(JSON.stringify({ error: 'El nombre es obligatorio' }), { status: 400, headers })
+    }
+
+    const slug = body.slug?.trim() || slugify(name)
 
     const { data, error } = await serverSupabase
-      .from('books')
-      .update({ title, author, slug, description, price, cover_url, category_id })
+      .from('categories')
+      .update({ name, slug })
       .eq('id', id)
       .select()
       .single()
 
     if (error) {
+      if (error.code === '23505') {
+        return new Response(JSON.stringify({ error: 'Ya existe una categoría con ese slug' }), { status: 409, headers })
+      }
       return new Response(JSON.stringify({ error: error.message }), { status: 400, headers })
     }
 
@@ -73,42 +81,25 @@ export const DELETE: APIRoute = async ({ params, request }) => {
     return new Response(JSON.stringify({ error: 'ID inválido' }), { status: 400, headers })
   }
 
-  const { error } = await serverSupabase.from('books').delete().eq('id', id)
+  const { count } = await serverSupabase
+    .from('books')
+    .select('id', { count: 'exact', head: true })
+    .eq('category_id', id)
+
+  if (count && count > 0) {
+    return new Response(
+      JSON.stringify({
+        error: `No se puede eliminar la categoría porque tiene ${count} libro(s) asociado(s).`,
+      }),
+      { status: 409, headers },
+    )
+  }
+
+  const { error } = await serverSupabase.from('categories').delete().eq('id', id)
 
   if (error) {
     return new Response(JSON.stringify({ error: error.message }), { status: 400, headers })
   }
 
   return new Response(JSON.stringify({ deleted: true }), { status: 200, headers })
-}
-
-export const POST: APIRoute = async ({ params, request }) => {
-  const headers = new Headers()
-  const serverSupabase = getServerSupabase(request, (name, value, options) => {
-    headers.append('Set-Cookie', serializeCookie(name, value, options))
-  })
-
-  const url = new URL(request.url)
-  const method = url.searchParams.get('_method')
-
-  if (method === 'DELETE') {
-    const authError = await checkAdmin(serverSupabase, headers)
-    if (authError) return authError
-
-    const id = Number(params.id)
-    if (!id) {
-      return new Response(JSON.stringify({ error: 'ID inválido' }), { status: 400, headers })
-    }
-
-    const { error } = await serverSupabase.from('books').delete().eq('id', id)
-
-    if (error) {
-      return new Response(JSON.stringify({ error: error.message }), { status: 400, headers })
-    }
-
-    headers.set('Location', '/admin/books')
-    return new Response(null, { status: 302, headers })
-  }
-
-  return new Response(JSON.stringify({ error: 'Método no permitido' }), { status: 405, headers })
 }

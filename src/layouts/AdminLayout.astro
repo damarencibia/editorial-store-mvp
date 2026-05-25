@@ -27,6 +27,7 @@ const displayName = user.email?.split('@')[0] ?? 'User'
 const navItems = [
   { href: '/admin', label: 'Dashboard', match: (p: string) => p === '/admin' },
   { href: '/admin/books', label: 'Libros', match: (p: string) => p.startsWith('/admin/books') },
+  { href: '/admin/categories', label: 'Categorías', match: (p: string) => p.startsWith('/admin/categories') },
   { href: '/admin/orders', label: 'Órdenes', match: (p: string) => p === '/admin/orders' },
   { href: '/admin/customers', label: 'Clientes', match: (p: string) => p === '/admin/customers' },
 ]

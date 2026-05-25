@@ -3,14 +3,40 @@ import StoreLayout from '../layouts/StoreLayout.astro'
 import BookCard from '../components/store/BookCard.vue'
 import { supabase } from '../lib/supabase'
 
-let books = null
+let grouped: { name: string; books: any[] }[] = []
+let totalBooks = 0
 let error = null
 try {
-  const { data, error: err } = await supabase.from('books').select('*').order('title')
-  books = data
-  error = err
+  const { data: categories, error: catErr } = await supabase.from('categories').select('*').order('name')
+  if (catErr) throw new Error('Error al cargar categorías')
+
+  const { data: books, error: bookErr } = await supabase.from('books').select('*, categories(name, slug)').order('title')
+  if (bookErr) throw new Error('Error al cargar libros')
+
+  const byCategory: Record<number, { name: string; books: any[] }> = {}
+  for (const cat of categories ?? []) {
+    byCategory[cat.id] = { name: cat.name, books: [] }
+  }
+
+  const uncategorized: any[] = []
+
+  for (const book of books ?? []) {
+    if (book.category_id && byCategory[book.category_id]) {
+      byCategory[book.category_id].books.push(book)
+    } else {
+      uncategorized.push(book)
+    }
+  }
+
+  grouped = Object.values(byCategory).filter((g) => g.books.length > 0)
+
+  if (uncategorized.length > 0) {
+    grouped.push({ name: 'Sin categoría', books: uncategorized })
+  }
+
+  totalBooks = (books ?? []).length
 } catch (e) {
-  error = e instanceof Error ? e.message : 'Failed to load books'
+  error = e instanceof Error ? e.message : 'Error al cargar el catálogo'
 }
 ---
 
@@ -61,7 +87,7 @@ try {
   <section id="catalog">
     <div class="flex items-center justify-between mb-6">
       <h2 class="font-heading text-2xl font-semibold">Catálogo</h2>
-      {books && <p class="text-sm text-text-muted">{books.length} libros</p>}
+      <p class="text-sm text-text-muted">{totalBooks} libros</p>
     </div>
 
     {error && (
@@ -70,15 +96,21 @@ try {
       </div>
     )}
 
-    {!error && books && books.length > 0 && (
-      <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6 animate-in">
-        {books.map((book) => (
-          <BookCard book={book} client:only="vue" />
-        ))}
+    {!error && grouped.length > 0 && grouped.map((group) => (
+      <div class="mb-10">
+        <div class="flex items-center gap-2 mb-4">
+          <h3 class="font-heading text-lg font-semibold">{group.name}</h3>
+          <span class="text-xs text-text-muted">({group.books.length})</span>
+        </div>
+        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
+          {group.books.map((book) => (
+            <BookCard book={book} client:only="vue" />
+          ))}
+        </div>
       </div>
-    )}
+    ))}
 
-    {!error && (!books || books.length === 0) && (
+    {!error && grouped.length === 0 && (
       <p class="text-text-muted text-center py-16">
         No hay libros disponibles. Vuelve pronto.
       </p>

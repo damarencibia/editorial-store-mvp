@@ -43,6 +43,19 @@
         placeholder="1499"
         :error="errors.price"
       />
+      <div>
+        <label for="category" class="block text-xs font-medium text-text-muted mb-1.5">Categoría</label>
+        <select
+          id="category"
+          v-model="categoryId"
+          class="w-full rounded-lg border border-border bg-surface-2 px-3.5 py-2.5 text-sm text-text-primary outline-none focus:border-accent transition-colors"
+        >
+          <option :value="null">Sin categoría</option>
+          <option v-for="cat in categories" :key="cat.id" :value="cat.id">
+            {{ cat.name }}
+          </option>
+        </select>
+      </div>
       <ImageUpload
         v-model="form.coverUrl"
         label="Portada"
@@ -89,6 +102,8 @@ const emit = defineEmits<{
 }>()
 
 const isEditing = ref(false)
+const categories = ref<{ id: number; name: string }[]>([])
+const categoryId = ref<number | null>(null)
 
 const form = reactive<BookFormData>({
   title: '',
@@ -102,14 +117,21 @@ const form = reactive<BookFormData>({
 onMounted(() => {
   const el = document.getElementById('book-data')
   isEditing.value = !!el
-  if (!el) return
-  const data = JSON.parse(el.textContent || '{}')
-  form.title = data.title ?? ''
-  form.author = data.author ?? ''
-  form.slug = data.slug ?? ''
-  form.description = data.description ?? ''
-  form.price = data.price ?? ''
-  form.coverUrl = data.coverUrl ?? ''
+  if (el) {
+    const data = JSON.parse(el.textContent || '{}')
+    form.title = data.title ?? ''
+    form.author = data.author ?? ''
+    form.slug = data.slug ?? ''
+    form.description = data.description ?? ''
+    form.price = data.price ?? ''
+    form.coverUrl = data.coverUrl ?? ''
+    categoryId.value = data.category_id ?? null
+  }
+
+  const catEl = document.getElementById('categories-data')
+  if (catEl) {
+    categories.value = JSON.parse(catEl.textContent || '[]')
+  }
 })
 
 const errors = reactive({
@@ -153,6 +175,7 @@ async function handleSubmit() {
         description: form.description.trim() || null,
         price: parseInt(form.price),
         cover_url: form.coverUrl.trim() || null,
+        category_id: categoryId.value,
       }),
     })
 
