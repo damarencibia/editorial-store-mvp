@@ -71,7 +71,7 @@
 </template>
 
 <script setup lang="ts">
-import { reactive, ref } from 'vue'
+import { reactive, ref, onMounted } from 'vue'
 import FormField from './FormField.vue'
 import ImageUpload from './ImageUpload.vue'
 
@@ -85,10 +85,8 @@ interface BookFormData {
 }
 
 const props = withDefaults(defineProps<{
-  initial?: Partial<BookFormData>
   isEditing?: boolean
 }>(), {
-  initial: () => ({}),
   isEditing: false,
 })
 
@@ -97,12 +95,25 @@ const emit = defineEmits<{
 }>()
 
 const form = reactive<BookFormData>({
-  title: props.initial.title ?? '',
-  author: props.initial.author ?? '',
-  slug: props.initial.slug ?? '',
-  description: props.initial.description ?? '',
-  price: props.initial.price ?? '',
-  coverUrl: props.initial.coverUrl ?? '',
+  title: '',
+  author: '',
+  slug: '',
+  description: '',
+  price: '',
+  coverUrl: '',
+})
+
+onMounted(() => {
+  if (!props.isEditing) return
+  const el = document.getElementById('book-data')
+  if (!el) return
+  const data = JSON.parse(el.textContent || '{}')
+  form.title = data.title ?? ''
+  form.author = data.author ?? ''
+  form.slug = data.slug ?? ''
+  form.description = data.description ?? ''
+  form.price = data.price ?? ''
+  form.coverUrl = data.coverUrl ?? ''
 })
 
 const errors = reactive({

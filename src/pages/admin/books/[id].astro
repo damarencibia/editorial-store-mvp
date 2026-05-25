@@ -41,17 +41,14 @@ if (!book) {
         </button>
       </form>
     </div>
-    <BookForm
-      client:only="vue"
-      :initial={{
-        title: book.title,
-        author: book.author,
-        slug: book.slug,
-        description: book.description ?? '',
-        price: String(book.price),
-        coverUrl: book.cover_url ?? '',
-      }}
-      :isEditing="true"
-    />
+    <BookForm client:only="vue" :isEditing="true" />
+    <script id="book-data" type="application/json" set:html={JSON.stringify({
+      title: book.title,
+      author: book.author,
+      slug: book.slug,
+      description: book.description ?? '',
+      price: String(book.price),
+      coverUrl: book.cover_url ?? '',
+    })}></script>
   </div>
 </AdminLayout>
