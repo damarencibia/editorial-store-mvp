@@ -84,15 +84,11 @@ interface BookFormData {
   coverUrl: string
 }
 
-const props = withDefaults(defineProps<{
-  isEditing?: boolean
-}>(), {
-  isEditing: false,
-})
-
 const emit = defineEmits<{
   saved: []
 }>()
+
+const isEditing = ref(false)
 
 const form = reactive<BookFormData>({
   title: '',
@@ -105,6 +101,7 @@ const form = reactive<BookFormData>({
 
 onMounted(() => {
   const el = document.getElementById('book-data')
+  isEditing.value = !!el
   if (!el) return
   const data = JSON.parse(el.textContent || '{}')
   form.title = data.title ?? ''
@@ -143,8 +140,8 @@ async function handleSubmit() {
   submitError.value = ''
 
   try {
-    const method = props.isEditing ? 'PUT' : 'POST'
-    const url = props.isEditing ? window.location.pathname : '/api/admin/books'
+    const method = isEditing.value ? 'PUT' : 'POST'
+    const url = isEditing.value ? window.location.pathname : '/api/admin/books'
 
     const res = await fetch(url, {
       method,
