@@ -162,7 +162,6 @@ async function handleSubmit() {
     }
 
     emit('saved')
-    window.location.href = '/admin/books'
   } catch (err: any) {
     submitError.value = err.message
   } finally {
