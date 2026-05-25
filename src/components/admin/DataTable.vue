@@ -86,6 +86,11 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
+import { defineOptions } from 'vue'
+
+defineOptions({
+  inheritAttrs: false,
+})
 
 interface Column {
   key: string
