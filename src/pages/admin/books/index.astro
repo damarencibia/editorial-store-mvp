@@ -48,12 +48,6 @@ const actions = [
       client:load
       emptyText="No hay libros registrados."
     />
-    <script id="books-data" type="application/json">{`
-{
-  "columns": ${JSON.stringify(columns)},
-  "rows": ${JSON.stringify(mappedBooks)},
-  "actions": ${JSON.stringify(actions)}
-}
-`}</script>
+    <script id="books-data" type="application/json">{JSON.stringify({ columns, rows: mappedBooks, actions })}</script>
   </div>
 </AdminLayout>
