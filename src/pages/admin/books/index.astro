@@ -46,10 +46,14 @@ const actions = [
 
     <DataTable
       client:load
-      :columns={columns}
-      :rows={mappedBooks}
       emptyText="No hay libros registrados."
-      :actions={actions}
     />
+    <script id="books-data" type="application/json">{`
+{
+  "columns": ${JSON.stringify(columns)},
+  "rows": ${JSON.stringify(mappedBooks)},
+  "actions": ${JSON.stringify(actions)}
+}
+`}</script>
   </div>
 </AdminLayout>

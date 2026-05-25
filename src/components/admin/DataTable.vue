@@ -85,12 +85,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
-import { defineOptions } from 'vue'
-
-defineOptions({
-  inheritAttrs: false,
-})
+import { ref, computed, onMounted } from 'vue'
 
 interface Column {
   key: string
@@ -103,17 +98,24 @@ interface Action {
 }
 
 const props = withDefaults(defineProps<{
-  columns: Column[]
-  rows: Record<string, any>[]
   perPage?: number
   emptyText?: string
-  actions?: Action[]
 }>(), {
-  columns: () => [],
-  rows: () => [],
   perPage: 10,
   emptyText: 'No hay datos disponibles.',
-  actions: () => [],
+})
+
+const columns = ref<Column[]>([])
+const rows = ref<Record<string, any>[]>([])
+const actions = ref<Action[]>([])
+
+onMounted(() => {
+  const el = document.getElementById('books-data')
+  if (!el) return
+  const data = JSON.parse(el.textContent || '{}')
+  columns.value = data.columns ?? []
+  rows.value = data.rows ?? []
+  actions.value = data.actions ?? []
 })
 
 const page = ref(1)
@@ -130,8 +132,7 @@ function toggleSort(key: string) {
 }
 
 const sortedRows = computed(() => {
-  const rows = Array.isArray(props.rows) ? props.rows : []
-  let items = [...rows]
+  const items = [...rows.value]
   if (sortKey.value) {
     items.sort((a, b) => {
       const aVal = a[sortKey.value]
@@ -146,10 +147,7 @@ const sortedRows = computed(() => {
   return items.slice(start, start + props.perPage)
 })
 
-const totalPages = computed(() => {
-  const rows = Array.isArray(props.rows) ? props.rows : []
-  return Math.ceil(rows.length / props.perPage)
-})
+const totalPages = computed(() => Math.ceil(rows.value.length / props.perPage))
 
 const visiblePages = computed(() => {
   const total = totalPages.value
