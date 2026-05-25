@@ -104,7 +104,6 @@ const form = reactive<BookFormData>({
 })
 
 onMounted(() => {
-  if (!props.isEditing) return
   const el = document.getElementById('book-data')
   if (!el) return
   const data = JSON.parse(el.textContent || '{}')
