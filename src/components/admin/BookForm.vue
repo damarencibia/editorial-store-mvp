@@ -141,7 +141,7 @@ async function handleSubmit() {
 
   try {
     const method = isEditing.value ? 'PUT' : 'POST'
-    const url = isEditing.value ? window.location.pathname : '/api/admin/books'
+    const url = isEditing.value ? `/api${window.location.pathname}` : '/api/admin/books'
 
     const res = await fetch(url, {
       method,
