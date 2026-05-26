@@ -118,7 +118,7 @@
                       :disabled="processing"
                       class="flex items-center justify-between w-full px-4 py-2 text-xs text-text-primary hover:bg-surface-3 transition-colors disabled:opacity-40"
                     >
-                      <span>{{ row[action.key] ? action.labelAlt : action.label }}</span>
+                      <span>{{ action.label }}</span>
                       <div
                         class="w-8 h-4 rounded-full relative transition-colors shrink-0"
                         :class="row[action.key] ? 'bg-accent' : 'bg-surface-3'"
