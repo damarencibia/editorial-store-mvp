@@ -68,15 +68,25 @@
                 </slot>
               </td>
               <td v-if="actions && actions.length > 0" class="px-4 py-3 text-right relative">
-                <button
-                  @click.stop="toggleDropdown(row.id)"
-                  class="cursor-pointer px-1.5 py-0.5 rounded text-text-muted hover:text-text-primary hover:bg-surface-2 transition-colors text-lg leading-none select-none"
-                >
-                  ⋮
-                </button>
+                <div class="flex items-center justify-end gap-1.5">
+                  <span
+                    v-if="row.is_visible !== undefined"
+                    class="text-lg cursor-default select-none" :title="row.is_visible ? 'Visible' : 'Oculto'"
+                  >{{ row.is_visible ? '👁' : '👁‍🗨' }}</span>
+                  <span
+                    v-if="row.is_best_seller !== undefined"
+                    class="text-lg cursor-default select-none" :title="row.is_best_seller ? 'Más vendido' : ''"
+                  >{{ row.is_best_seller ? '⭐' : '☆' }}</span>
+                  <button
+                    @click.stop="toggleDropdown(row.id)"
+                    class="cursor-pointer px-1.5 py-0.5 rounded text-text-muted hover:text-text-primary hover:bg-surface-2 transition-colors text-lg leading-none select-none"
+                  >
+                    ⋮
+                  </button>
+                </div>
                 <div
                   v-if="openDropdownId === row.id"
-                  class="absolute right-0 top-full mt-1 z-30 min-w-[180px] bg-surface-2 border border-border rounded-lg shadow-xl py-1 origin-top-right"
+                  class="absolute right-0 top-full mt-1 z-30 min-w-[220px] bg-surface-2 border border-border rounded-lg shadow-xl py-1 origin-top-right"
                   @click.stop
                 >
                   <template v-for="action in actions" :key="action.label">
@@ -91,9 +101,18 @@
                       v-else-if="action.type === 'toggle'"
                       @click="executeRowAction(action, row)"
                       :disabled="processing"
-                      class="flex items-center gap-2 w-full text-left px-4 py-2 text-xs text-text-primary hover:bg-surface-3 transition-colors disabled:opacity-40"
+                      class="flex items-center justify-between w-full px-4 py-2 text-xs text-text-primary hover:bg-surface-3 transition-colors disabled:opacity-40"
                     >
-                      {{ row[action.key] ? action.labelAlt : action.label }}
+                      <span>{{ row[action.key] ? action.labelAlt : action.label }}</span>
+                      <div
+                        class="w-8 h-4 rounded-full relative transition-colors shrink-0"
+                        :class="row[action.key] ? 'bg-accent' : 'bg-surface-3'"
+                      >
+                        <div
+                          class="absolute top-0.5 h-3 w-3 rounded-full bg-white transition-all shadow-sm"
+                          :class="row[action.key] ? 'left-[18px]' : 'left-0.5'"
+                        ></div>
+                      </div>
                     </button>
                   </template>
                 </div>
