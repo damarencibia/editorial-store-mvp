@@ -25,7 +25,7 @@ export const POST: APIRoute = async ({ request }) => {
 
   try {
     const body = await request.json()
-    const { title, author, slug, description, price, cover_url } = body
+    const { title, author, slug, description, price, cover_url, is_visible } = body
 
     if (!title || !author || !slug || !price) {
       return new Response(JSON.stringify({ error: 'Faltan campos obligatorios' }), { status: 400, headers })
@@ -33,6 +33,7 @@ export const POST: APIRoute = async ({ request }) => {
 
     const { data, error } = await serverSupabase.from('books').insert({
       title, author, slug, description, price, cover_url,
+      is_visible: is_visible ?? true,
     }).select().single()
 
     if (error) {

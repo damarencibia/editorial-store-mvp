@@ -63,6 +63,20 @@
       />
     </div>
 
+    <div class="flex flex-wrap gap-6 pt-2">
+      <label class="flex items-center gap-3 cursor-pointer select-none">
+        <input type="checkbox" v-model="form.isVisible" class="sr-only peer" />
+        <div class="w-10 h-5 bg-surface-3 rounded-full peer-checked:bg-accent relative transition-colors after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:after:translate-x-5"></div>
+        <span class="text-sm text-text-primary">Visible en tienda</span>
+      </label>
+
+      <label v-if="isEditing" class="flex items-center gap-3 cursor-pointer select-none">
+        <input type="checkbox" v-model="form.manualBestSeller" class="sr-only peer" />
+        <div class="w-10 h-5 bg-surface-3 rounded-full peer-checked:bg-accent relative transition-colors after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:after:translate-x-5"></div>
+        <span class="text-sm text-text-primary">Marcar como más vendido</span>
+      </label>
+    </div>
+
     <p v-if="submitError" class="text-sm text-red-400">{{ submitError }}</p>
 
     <div class="flex items-center gap-3 pt-2">
@@ -95,6 +109,8 @@ interface BookFormData {
   description: string
   price: string
   coverUrl: string
+  isVisible: boolean
+  manualBestSeller: boolean
 }
 
 const emit = defineEmits<{
@@ -112,6 +128,8 @@ const form = reactive<BookFormData>({
   description: '',
   price: '',
   coverUrl: '',
+  isVisible: true,
+  manualBestSeller: false,
 })
 
 onMounted(() => {
@@ -125,6 +143,8 @@ onMounted(() => {
     form.description = data.description ?? ''
     form.price = data.price ?? ''
     form.coverUrl = data.coverUrl ?? ''
+    form.isVisible = data.isVisible ?? true
+    form.manualBestSeller = data.manualBestSeller ?? false
     categoryId.value = data.category_id ?? null
   }
 
@@ -176,6 +196,8 @@ async function handleSubmit() {
         price: parseInt(form.price),
         cover_url: form.coverUrl.trim() || null,
         category_id: categoryId.value,
+        is_visible: form.isVisible,
+        ...(isEditing.value ? { manual_best_seller: form.manualBestSeller } : {}),
       }),
     })
 

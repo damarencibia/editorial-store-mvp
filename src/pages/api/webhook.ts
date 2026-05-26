@@ -40,7 +40,16 @@ export const POST: APIRoute = async ({ request }) => {
       return new Response(JSON.stringify({ error: 'Failed to save order' }), { status: 500 })
     }
 
-    console.log('Order saved:', session.id)
+    for (const item of items) {
+      await supabase.rpc('increment_sales_count', {
+        book_id: item.book_id,
+        quantity: item.quantity,
+      })
+    }
+
+    await supabase.rpc('sync_best_sellers')
+
+    console.log('Order saved and sales updated:', session.id)
   }
 
   return new Response(JSON.stringify({ received: true }), {

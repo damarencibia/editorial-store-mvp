@@ -16,8 +16,17 @@ const mappedBooks = (books ?? []).map((b) => {
   const price = '$' + (b.price / 100).toFixed(2)
   const date = new Date(b.created_at).toLocaleDateString('es-ES')
   return {
-    id: b.id, title: b.title, author: b.author, price, created_at: date, slug: b.slug, cover: b.cover_url,
+    id: b.id,
+    title: b.title,
+    author: b.author,
+    price,
+    created_at: date,
+    slug: b.slug,
+    cover: b.cover_url,
     category: b.categories?.name ?? '-',
+    sales_count: b.sales_count ?? 0,
+    is_visible: b.is_visible ?? true,
+    is_best_seller: b.is_best_seller ?? false,
   }
 })
 
@@ -27,11 +36,22 @@ const columns = [
   { key: 'author', label: 'Autor' },
   { key: 'category', label: 'Categoría' },
   { key: 'price', label: 'Precio' },
+  { key: 'sales_count', label: 'Ventas' },
+  { key: 'is_visible', label: 'Visible', type: 'toggle' },
+  { key: 'is_best_seller', label: 'Más vendido', type: 'badge' },
   { key: 'created_at', label: 'Creado' },
 ]
 
 const actions = [
   { label: 'Editar', href: '/admin/books/{id}' },
+]
+
+const selectable = true
+const bulkActions = [
+  { action: 'toggle_visibility', label: 'Mostrar/Ocultar' },
+  { action: 'mark_best_seller', label: 'Marcar más vendido' },
+  { action: 'remove_best_seller', label: 'Quitar más vendido' },
+  { action: 'delete', label: 'Eliminar', variant: 'danger' },
 ]
 ---
 
@@ -53,6 +73,6 @@ const actions = [
       client:load
       emptyText="No hay libros registrados."
     />
-    <script id="books-data" type="application/json" set:html={JSON.stringify({ columns, rows: mappedBooks, actions })}></script>
+    <script id="books-data" type="application/json" set:html={JSON.stringify({ columns, rows: mappedBooks, actions, selectable, bulkActions })}></script>
   </div>
 </AdminLayout>

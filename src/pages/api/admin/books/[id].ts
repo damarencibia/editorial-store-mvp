@@ -40,14 +40,27 @@ export const PUT: APIRoute = async ({ params, request }) => {
 
   try {
     const body = await request.json()
-    const { title, author, slug, description, price, cover_url, category_id } = body
+    const { title, author, slug, description, price, cover_url, category_id, is_visible, manual_best_seller } = body
+
+    const updates: Record<string, any> = { title, author, slug, description, price, cover_url, category_id, is_visible }
+
+    if (typeof manual_best_seller === 'boolean') {
+      updates.manual_best_seller = manual_best_seller
+      if (manual_best_seller === true) {
+        updates.is_best_seller = true
+      }
+    }
 
     const { data, error } = await serverSupabase
       .from('books')
-      .update({ title, author, slug, description, price, cover_url, category_id })
+      .update(updates)
       .eq('id', id)
       .select()
       .single()
+
+    if (typeof manual_best_seller === 'boolean' && manual_best_seller === false) {
+      await serverSupabase.rpc('sync_best_sellers')
+    }
 
     if (error) {
       return new Response(JSON.stringify({ error: error.message }), { status: 400, headers })

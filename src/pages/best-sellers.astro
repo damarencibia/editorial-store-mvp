@@ -1,0 +1,40 @@
+---
+import StoreLayout from '../layouts/StoreLayout.astro'
+import BookCard from '../components/store/BookCard.vue'
+import { supabase } from '../lib/supabase'
+
+const { data: books } = await supabase
+  .from('books')
+  .select('*, categories(name, slug)')
+  .eq('is_visible', true)
+  .eq('is_best_seller', true)
+  .order('sales_count', { ascending: false })
+---
+
+<StoreLayout>
+  <title>Más vendidos — Editorial</title>
+  <meta property="og:title" slot="head" content="Más vendidos — Editorial" />
+  <meta property="og:description" slot="head" content="Los libros más vendidos de nuestra colección." />
+  <meta property="og:type" slot="head" content="website" />
+
+  <section class="py-16">
+    <div class="mb-8">
+      <a href="/" class="text-sm text-text-muted hover:text-text-primary transition-colors">&larr; Volver al inicio</a>
+    </div>
+
+    <h1 class="font-heading text-3xl font-bold tracking-tight mb-2">Más vendidos</h1>
+    <p class="text-text-muted mb-8">Los títulos más populares de nuestra colección.</p>
+
+    {books && books.length > 0 ? (
+      <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
+        {books.map((book) => (
+          <BookCard book={book} client:only="vue" />
+        ))}
+      </div>
+    ) : (
+      <p class="text-text-muted text-center py-16">
+        No hay libros más vendidos por el momento.
+      </p>
+    )}
+  </section>
+</StoreLayout>

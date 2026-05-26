@@ -1,9 +1,27 @@
 <template>
   <div>
+    <div v-if="resultMessage" :class="[
+      'mb-4 px-4 py-3 rounded-lg text-sm border transition-all',
+      resultType === 'success'
+        ? 'bg-green-500/10 border-green-500/20 text-green-400'
+        : 'bg-red-500/10 border-red-500/20 text-red-400',
+    ]">
+      {{ resultMessage }}
+    </div>
+
     <div class="overflow-x-auto rounded-lg border border-border">
       <table class="w-full text-sm">
         <thead>
           <tr class="border-b border-border bg-surface-2">
+            <th v-if="selectable" class="px-4 py-3 w-10">
+              <input
+                type="checkbox"
+                :checked="allSelected"
+                :indeterminate="someSelected && !allSelected"
+                @change="toggleSelectAll"
+                class="cursor-pointer rounded border-border accent-accent"
+              />
+            </th>
             <th
               v-for="col in columns"
               :key="col.key"
@@ -27,6 +45,14 @@
         </thead>
         <tbody class="divide-y divide-border">
           <tr v-for="row in sortedRows" :key="row.id" class="hover:bg-surface-2/50 transition-colors">
+            <td v-if="selectable" class="px-4 py-3">
+              <input
+                type="checkbox"
+                :checked="selectedIds.has(row.id)"
+                @change="toggleSelect(row.id)"
+                class="cursor-pointer rounded border-border accent-accent"
+              />
+            </td>
             <td v-for="col in columns" :key="col.key" class="px-4 py-3 text-text-primary">
               <slot :name="`cell-${col.key}`" :row="row" :value="row[col.key]">
                 <img
@@ -36,6 +62,17 @@
                   class="w-10 h-14 object-cover rounded cursor-pointer"
                   @click.stop="previewImage = row[col.key]"
                 />
+                <button
+                  v-else-if="col.type === 'toggle'"
+                  @click.stop="toggleSingleVisibility(row.id)"
+                  class="cursor-pointer text-lg transition-colors hover:opacity-70"
+                  :title="row[col.key] ? 'Visible' : 'Oculto'"
+                >
+                  {{ row[col.key] ? '👁' : '👁‍🗨' }}
+                </button>
+                <span v-else-if="col.type === 'badge'" class="text-lg" :title="row[col.key] ? 'Más vendido' : ''">
+                  {{ row[col.key] ? '⭐' : '☆' }}
+                </span>
                 <span v-else>{{ formatCell(row[col.key]) }}</span>
               </slot>
             </td>
@@ -51,7 +88,7 @@
             </td>
           </tr>
           <tr v-if="rows.length === 0">
-            <td :colspan="columns.length + (actions && actions.length > 0 ? 1 : 0)" class="px-4 py-12 text-center text-text-muted">
+            <td :colspan="columnCount" class="px-4 py-12 text-center text-text-muted">
               {{ emptyText }}
             </td>
           </tr>
@@ -105,6 +142,35 @@
           @click.stop
         />
       </div>
+
+      <div
+        v-if="selectable && selectedIds.size > 0"
+        class="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 flex items-center gap-4 bg-surface-2 border border-border rounded-lg px-5 py-3 shadow-xl"
+      >
+        <span class="text-sm text-text-muted whitespace-nowrap">{{ selectedIds.size }} libro(s) seleccionados</span>
+        <div class="flex items-center gap-2">
+          <button
+            v-for="ba in bulkActions"
+            :key="ba.action"
+            @click="executeBulkAction(ba.action)"
+            :disabled="processing"
+            :class="[
+              'cursor-pointer px-3 py-1.5 rounded-lg text-xs font-medium transition-colors disabled:opacity-40',
+              ba.variant === 'danger'
+                ? 'text-red-400 hover:bg-red-500/10 border border-red-500/20'
+                : 'text-accent hover:bg-accent/10 border border-accent/20',
+            ]"
+          >
+            {{ ba.label }}
+          </button>
+        </div>
+        <button
+          @click="selectedIds.clear()"
+          class="cursor-pointer text-xs text-text-muted hover:text-text-primary transition-colors"
+        >
+          Cancelar
+        </button>
+      </div>
     </Teleport>
   </div>
 </template>
@@ -115,12 +181,18 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 interface Column {
   key: string
   label: string
-  type?: 'text' | 'image'
+  type?: 'text' | 'image' | 'toggle' | 'badge'
 }
 
 interface Action {
   label: string
   href: string
+}
+
+interface BulkAction {
+  action: string
+  label: string
+  variant?: 'primary' | 'danger'
 }
 
 const props = withDefaults(defineProps<{
@@ -132,9 +204,14 @@ const props = withDefaults(defineProps<{
 })
 
 const previewImage = ref<string | null>(null)
+const processing = ref(false)
+const resultMessage = ref('')
+const resultType = ref<'success' | 'error'>('success')
 
 function onKeyDown(e: KeyboardEvent) {
-  if (e.key === 'Escape') previewImage.value = null
+  if (e.key === 'Escape') {
+    previewImage.value = null
+  }
 }
 
 onMounted(() => document.addEventListener('keydown', onKeyDown))
@@ -143,6 +220,9 @@ onUnmounted(() => document.removeEventListener('keydown', onKeyDown))
 const columns = ref<Column[]>([])
 const rows = ref<Record<string, any>[]>([])
 const actions = ref<Action[]>([])
+const selectable = ref(false)
+const bulkActions = ref<BulkAction[]>([])
+const selectedIds = ref<Set<number>>(new Set())
 
 onMounted(() => {
   const el = document.getElementById('books-data')
@@ -151,6 +231,8 @@ onMounted(() => {
   columns.value = data.columns ?? []
   rows.value = data.rows ?? []
   actions.value = data.actions ?? []
+  selectable.value = data.selectable ?? false
+  bulkActions.value = data.bulkActions ?? []
 })
 
 const page = ref(1)
@@ -192,6 +274,100 @@ const visiblePages = computed(() => {
   if (current >= total - 2) return Array.from({ length: 5 }, (_, i) => total - 4 + i)
   return [current - 2, current - 1, current, current + 1, current + 2]
 })
+
+const columnCount = computed(() => {
+  let count = columns.value.length
+  if (selectable.value) count++
+  if (actions.value.length > 0) count++
+  return count
+})
+
+const allSelected = computed(() => {
+  const currentPageIds = sortedRows.value.map(r => r.id)
+  return currentPageIds.length > 0 && currentPageIds.every(id => selectedIds.value.has(id))
+})
+
+const someSelected = computed(() => {
+  const currentPageIds = sortedRows.value.map(r => r.id)
+  return currentPageIds.some(id => selectedIds.value.has(id))
+})
+
+function toggleSelectAll() {
+  const currentPageIds = sortedRows.value.map(r => r.id)
+  if (allSelected.value) {
+    for (const id of currentPageIds) {
+      selectedIds.value.delete(id)
+    }
+  } else {
+    for (const id of currentPageIds) {
+      selectedIds.value.add(id)
+    }
+  }
+  selectedIds.value = new Set(selectedIds.value)
+}
+
+function toggleSelect(id: number) {
+  if (selectedIds.value.has(id)) {
+    selectedIds.value.delete(id)
+  } else {
+    selectedIds.value.add(id)
+  }
+  selectedIds.value = new Set(selectedIds.value)
+}
+
+async function toggleSingleVisibility(id: number) {
+  processing.value = true
+  try {
+    const res = await fetch('/api/admin/books/bulk', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'toggle_visibility', ids: [id] }),
+    })
+    if (!res.ok) {
+      const data = await res.json()
+      throw new Error(data.error || 'Error al cambiar visibilidad')
+    }
+    window.location.reload()
+  } catch (err: any) {
+    resultMessage.value = err.message
+    resultType.value = 'error'
+    setTimeout(() => { resultMessage.value = '' }, 4000)
+  } finally {
+    processing.value = false
+  }
+}
+
+async function executeBulkAction(action: string) {
+  if (action === 'delete') {
+    const confirmed = confirm('¿Estás seguro de eliminar los libros seleccionados? Esta acción no se puede deshacer.')
+    if (!confirmed) return
+  }
+
+  processing.value = true
+  resultMessage.value = ''
+  try {
+    const res = await fetch('/api/admin/books/bulk', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action, ids: Array.from(selectedIds.value) }),
+    })
+    const data = await res.json()
+    if (!res.ok) {
+      throw new Error(data.error || 'Error al ejecutar acción')
+    }
+    resultMessage.value = 'Acción ejecutada correctamente.'
+    resultType.value = 'success'
+    setTimeout(() => {
+      window.location.reload()
+    }, 1000)
+  } catch (err: any) {
+    resultMessage.value = err.message
+    resultType.value = 'error'
+    setTimeout(() => { resultMessage.value = '' }, 4000)
+  } finally {
+    processing.value = false
+  }
+}
 
 function resolveHref(template: string, row: Record<string, any>): string {
   return template.replace(/\{(\w+)\}/g, (_, key) => String(row[key] ?? ''))
