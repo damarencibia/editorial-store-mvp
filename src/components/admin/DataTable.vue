@@ -71,12 +71,27 @@
                 <div class="flex items-center justify-end gap-1.5">
                   <span
                     v-if="row.is_visible !== undefined"
-                    class="text-lg cursor-default select-none" :title="row.is_visible ? 'Visible' : 'Oculto'"
-                  >{{ row.is_visible ? '👁' : '👁‍🗨' }}</span>
+                    class="inline-flex items-center cursor-default select-none" :title="row.is_visible ? 'Visible' : 'Oculto'"
+                  >
+                    <svg v-if="row.is_visible" class="w-4 h-4 text-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7Z" />
+                    </svg>
+                    <svg v-else class="w-4 h-4 text-text-dim" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M3.98 8.223A10.477 10.477 0 0 0 1.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0 1 12 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 0 1-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 1 0-4.243-4.243m4.242 4.242L9.88 9.88" />
+                    </svg>
+                  </span>
                   <span
                     v-if="row.is_best_seller !== undefined"
-                    class="text-lg cursor-default select-none" :title="row.is_best_seller ? 'Más vendido' : ''"
-                  >{{ row.is_best_seller ? '⭐' : '☆' }}</span>
+                    class="inline-flex items-center cursor-default select-none" :title="row.is_best_seller ? 'Más vendido' : ''"
+                  >
+                    <svg v-if="row.is_best_seller" class="w-4 h-4 text-yellow-500" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                    </svg>
+                    <svg v-else class="w-4 h-4 text-text-dim" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M11.48 3.499a.562.562 0 0 1 1.04 0l2.125 5.111a.563.563 0 0 0 .475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 0 0-.182.557l1.285 5.385a.562.562 0 0 1-.84.61l-4.725-2.885a.562.562 0 0 0-.586 0L6.982 20.54a.562.562 0 0 1-.84-.61l1.285-5.386a.562.562 0 0 0-.182-.557l-4.204-3.602a.562.562 0 0 1 .321-.988l5.518-.442a.563.563 0 0 0 .475-.345L11.48 3.5Z" />
+                    </svg>
+                  </span>
                   <button
                     @click.stop="toggleDropdown(row.id)"
                     class="cursor-pointer px-1.5 py-0.5 rounded text-text-muted hover:text-text-primary hover:bg-surface-2 transition-colors text-lg leading-none select-none"
