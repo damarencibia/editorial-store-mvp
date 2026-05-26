@@ -70,20 +70,12 @@ export const POST: APIRoute = async ({ request }) => {
         }
 
         for (const book of books) {
-          if (book.is_best_seller) {
-            await serverSupabase
-              .from('books')
-              .update({ manual_best_seller: false })
-              .eq('id', book.id)
-          } else {
-            await serverSupabase
-              .from('books')
-              .update({ manual_best_seller: true, is_best_seller: true })
-              .eq('id', book.id)
-          }
+          const newValue = !book.is_best_seller
+          await serverSupabase
+            .from('books')
+            .update({ manual_best_seller: newValue, is_best_seller: newValue })
+            .eq('id', book.id)
         }
-
-        await serverSupabase.rpc('sync_best_sellers')
 
         return new Response(JSON.stringify({ success: true }), { status: 200, headers })
       }

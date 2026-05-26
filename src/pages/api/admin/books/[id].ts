@@ -46,9 +46,7 @@ export const PUT: APIRoute = async ({ params, request }) => {
 
     if (typeof manual_best_seller === 'boolean') {
       updates.manual_best_seller = manual_best_seller
-      if (manual_best_seller === true) {
-        updates.is_best_seller = true
-      }
+      updates.is_best_seller = manual_best_seller
     }
 
     const { data, error } = await serverSupabase
@@ -57,10 +55,6 @@ export const PUT: APIRoute = async ({ params, request }) => {
       .eq('id', id)
       .select()
       .single()
-
-    if (typeof manual_best_seller === 'boolean' && manual_best_seller === false) {
-      await serverSupabase.rpc('sync_best_sellers')
-    }
 
     if (error) {
       return new Response(JSON.stringify({ error: error.message }), { status: 400, headers })
