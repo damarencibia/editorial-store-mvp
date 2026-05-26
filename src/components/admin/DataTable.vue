@@ -1,192 +1,197 @@
 <template>
-  <div>
-    <div v-if="resultMessage" :class="[
-      'mb-4 px-4 py-3 rounded-lg text-sm border transition-all',
-      resultType === 'success'
-        ? 'bg-green-500/10 border-green-500/20 text-green-400'
-        : 'bg-red-500/10 border-red-500/20 text-red-400',
-    ]">
-      {{ resultMessage }}
-    </div>
+  <div v-if="!loaded" class="py-12 text-center text-text-muted text-sm">
+    Cargando...
+  </div>
+  <template v-else>
+    <div>
+      <div v-if="resultMessage" :class="[
+        'mb-4 px-4 py-3 rounded-lg text-sm border transition-all',
+        resultType === 'success'
+          ? 'bg-green-500/10 border-green-500/20 text-green-400'
+          : 'bg-red-500/10 border-red-500/20 text-red-400',
+      ]">
+        {{ resultMessage }}
+      </div>
 
-    <div class="overflow-x-auto rounded-lg border border-border">
-      <table class="w-full text-sm">
-        <thead>
-          <tr class="border-b border-border bg-surface-2">
-            <th v-if="selectable" class="px-4 py-3 w-10">
-              <input
-                type="checkbox"
-                :checked="allSelected"
-                :indeterminate="someSelected && !allSelected"
-                @change="toggleSelectAll"
-                class="cursor-pointer rounded border-border accent-accent"
-              />
-            </th>
-            <th
-              v-for="col in columns"
-              :key="col.key"
-              :class="[
-                'px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-text-muted select-none transition-colors',
-                col.type !== 'image' ? 'cursor-pointer hover:text-text-primary' : ''
-              ]"
-              @click="col.type !== 'image' && toggleSort(col.key)"
-            >
-              <span class="inline-flex items-center gap-1">
-                {{ col.label }}
-                <span v-if="sortKey === col.key" class="text-accent text-[10px]">
-                  {{ sortDir === 'asc' ? '↑' : '↓' }}
-                </span>
-              </span>
-            </th>
-            <th v-if="actions && actions.length > 0" class="px-4 py-3 w-10"></th>
-          </tr>
-        </thead>
-        <tbody class="divide-y divide-border">
-          <tr v-for="row in sortedRows" :key="row.id" class="hover:bg-surface-2/50 transition-colors">
-            <td v-if="selectable" class="px-4 py-3">
-              <input
-                type="checkbox"
-                :checked="selectedIds.has(row.id)"
-                @change="toggleSelect(row.id)"
-                class="cursor-pointer rounded border-border accent-accent"
-              />
-            </td>
-            <td v-for="col in columns" :key="col.key" class="px-4 py-3 text-text-primary">
-              <slot :name="`cell-${col.key}`" :row="row" :value="row[col.key]">
-                <img
-                  v-if="col.type === 'image' && row[col.key]"
-                  :src="row[col.key]"
-                  alt="Portada"
-                  class="w-10 h-14 object-cover rounded cursor-pointer"
-                  @click.stop="previewImage = row[col.key]"
+      <div class="overflow-x-auto rounded-lg border border-border">
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="border-b border-border bg-surface-2">
+              <th v-if="selectable" class="px-4 py-3 w-10">
+                <input
+                  type="checkbox"
+                  :checked="allSelected"
+                  :indeterminate="someSelected && !allSelected"
+                  @change="toggleSelectAll"
+                  class="cursor-pointer rounded border-border accent-accent"
                 />
-                <span v-else>{{ formatCell(row[col.key]) }}</span>
-              </slot>
-            </td>
-            <td v-if="actions && actions.length > 0" class="px-4 py-3 text-right relative">
-              <button
-                @click.stop="toggleDropdown(row.id)"
-                class="cursor-pointer px-1.5 py-0.5 rounded text-text-muted hover:text-text-primary hover:bg-surface-2 transition-colors text-lg leading-none select-none"
+              </th>
+              <th
+                v-for="col in columns"
+                :key="col.key"
+                :class="[
+                  'px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-text-muted select-none transition-colors',
+                  col.type !== 'image' ? 'cursor-pointer hover:text-text-primary' : ''
+                ]"
+                @click="col.type !== 'image' && toggleSort(col.key)"
               >
-                ⋮
-              </button>
-              <div
-                v-if="openDropdownId === row.id"
-                class="absolute right-0 top-full mt-1 z-30 min-w-[180px] bg-surface-2 border border-border rounded-lg shadow-xl py-1 origin-top-right"
-                @click.stop
-              >
-                <template v-for="action in actions" :key="action.label">
-                  <a
-                    v-if="action.type === 'link'"
-                    :href="resolveHref(action.href, row)"
-                    class="flex items-center gap-2 px-4 py-2 text-xs text-text-primary hover:bg-surface-3 transition-colors"
-                  >
-                    {{ action.label }}
-                  </a>
-                  <button
-                    v-else-if="action.type === 'toggle'"
-                    @click="executeRowAction(action, row)"
-                    :disabled="processing"
-                    class="flex items-center gap-2 w-full text-left px-4 py-2 text-xs text-text-primary hover:bg-surface-3 transition-colors disabled:opacity-40"
-                  >
-                    {{ row[action.key] ? action.labelAlt : action.label }}
-                  </button>
-                </template>
-              </div>
-            </td>
-          </tr>
-          <tr v-if="rows.length === 0">
-            <td :colspan="columnCount" class="px-4 py-12 text-center text-text-muted">
-              {{ emptyText }}
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-
-    <div v-if="totalPages > 1" class="flex items-center justify-between mt-4">
-      <p class="text-xs text-text-muted">
-        {{ (page - 1) * perPage + 1 }}-{{ Math.min(page * perPage, rows.length) }} de {{ rows.length }}
-      </p>
-      <div class="flex items-center gap-2">
-        <button
-          @click="page = Math.max(1, page - 1)"
-          :disabled="page === 1"
-          class="cursor-pointer rounded-lg border border-border px-3 py-1.5 text-xs text-text-muted hover:text-text-primary hover:border-border-hover disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-        >
-          Anterior
-        </button>
-        <button
-          v-for="p in visiblePages"
-          :key="p"
-          @click="page = p"
-          :class="[
-            'rounded-lg px-3 py-1.5 text-xs transition-colors cursor-pointer',
-            p === page ? 'bg-accent text-white' : 'text-text-muted hover:text-text-primary hover:bg-surface-2',
-          ]"
-        >
-          {{ p }}
-        </button>
-        <button
-          @click="page = Math.min(totalPages, page + 1)"
-          :disabled="page === totalPages"
-          class="cursor-pointer rounded-lg border border-border px-3 py-1.5 text-xs text-text-muted hover:text-text-primary hover:border-border-hover disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-        >
-          Siguiente
-        </button>
-      </div>
-    </div>
-
-    <Teleport to="body">
-      <div
-        v-if="previewImage"
-        class="fixed inset-0 z-50 flex items-center justify-center bg-black/70 cursor-pointer"
-        @click="previewImage = null"
-      >
-        <img
-          :src="previewImage"
-          alt="Portada"
-          class="max-w-[85vw] max-h-[85vh] object-contain rounded-lg shadow-2xl cursor-default"
-          @click.stop
-        />
+                <span class="inline-flex items-center gap-1">
+                  {{ col.label }}
+                  <span v-if="sortKey === col.key" class="text-accent text-[10px]">
+                    {{ sortDir === 'asc' ? '↑' : '↓' }}
+                  </span>
+                </span>
+              </th>
+              <th v-if="actions && actions.length > 0" class="px-4 py-3 w-10"></th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-border">
+            <tr v-for="row in sortedRows" :key="row.id" class="hover:bg-surface-2/50 transition-colors">
+              <td v-if="selectable" class="px-4 py-3">
+                <input
+                  type="checkbox"
+                  :checked="selectedIds.has(row.id)"
+                  @change="toggleSelect(row.id)"
+                  class="cursor-pointer rounded border-border accent-accent"
+                />
+              </td>
+              <td v-for="col in columns" :key="col.key" class="px-4 py-3 text-text-primary">
+                <slot :name="`cell-${col.key}`" :row="row" :value="row[col.key]">
+                  <img
+                    v-if="col.type === 'image' && row[col.key]"
+                    :src="row[col.key]"
+                    alt="Portada"
+                    class="w-10 h-14 object-cover rounded cursor-pointer"
+                    @click.stop="previewImage = row[col.key]"
+                  />
+                  <span v-else>{{ formatCell(row[col.key]) }}</span>
+                </slot>
+              </td>
+              <td v-if="actions && actions.length > 0" class="px-4 py-3 text-right relative">
+                <button
+                  @click.stop="toggleDropdown(row.id)"
+                  class="cursor-pointer px-1.5 py-0.5 rounded text-text-muted hover:text-text-primary hover:bg-surface-2 transition-colors text-lg leading-none select-none"
+                >
+                  ⋮
+                </button>
+                <div
+                  v-if="openDropdownId === row.id"
+                  class="absolute right-0 top-full mt-1 z-30 min-w-[180px] bg-surface-2 border border-border rounded-lg shadow-xl py-1 origin-top-right"
+                  @click.stop
+                >
+                  <template v-for="action in actions" :key="action.label">
+                    <a
+                      v-if="action.type === 'link'"
+                      :href="resolveHref(action.href, row)"
+                      class="flex items-center gap-2 px-4 py-2 text-xs text-text-primary hover:bg-surface-3 transition-colors"
+                    >
+                      {{ action.label }}
+                    </a>
+                    <button
+                      v-else-if="action.type === 'toggle'"
+                      @click="executeRowAction(action, row)"
+                      :disabled="processing"
+                      class="flex items-center gap-2 w-full text-left px-4 py-2 text-xs text-text-primary hover:bg-surface-3 transition-colors disabled:opacity-40"
+                    >
+                      {{ row[action.key] ? action.labelAlt : action.label }}
+                    </button>
+                  </template>
+                </div>
+              </td>
+            </tr>
+            <tr v-if="rows.length === 0">
+              <td :colspan="columnCount" class="px-4 py-12 text-center text-text-muted">
+                {{ emptyText }}
+              </td>
+            </tr>
+          </tbody>
+        </table>
       </div>
 
-      <div
-        v-if="selectable && selectedIds.size > 0"
-        class="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 flex items-center gap-4 bg-surface-2 border border-border rounded-lg px-5 py-3 shadow-xl"
-      >
-        <span class="text-sm text-text-muted whitespace-nowrap">{{ selectedIds.size }} libro(s) seleccionados</span>
+      <div v-if="totalPages > 1" class="flex items-center justify-between mt-4">
+        <p class="text-xs text-text-muted">
+          {{ (page - 1) * perPage + 1 }}-{{ Math.min(page * perPage, rows.length) }} de {{ rows.length }}
+        </p>
         <div class="flex items-center gap-2">
           <button
-            v-for="ba in bulkActions"
-            :key="ba.action"
-            @click="executeBulkAction(ba.action)"
-            :disabled="processing"
+            @click="page = Math.max(1, page - 1)"
+            :disabled="page === 1"
+            class="cursor-pointer rounded-lg border border-border px-3 py-1.5 text-xs text-text-muted hover:text-text-primary hover:border-border-hover disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+          >
+            Anterior
+          </button>
+          <button
+            v-for="p in visiblePages"
+            :key="p"
+            @click="page = p"
             :class="[
-              'cursor-pointer px-3 py-1.5 rounded-lg text-xs font-medium transition-colors disabled:opacity-40',
-              ba.variant === 'danger'
-                ? 'text-red-400 hover:bg-red-500/10 border border-red-500/20'
-                : 'text-accent hover:bg-accent/10 border border-accent/20',
+              'rounded-lg px-3 py-1.5 text-xs transition-colors cursor-pointer',
+              p === page ? 'bg-accent text-white' : 'text-text-muted hover:text-text-primary hover:bg-surface-2',
             ]"
           >
-            {{ ba.label }}
+            {{ p }}
+          </button>
+          <button
+            @click="page = Math.min(totalPages, page + 1)"
+            :disabled="page === totalPages"
+            class="cursor-pointer rounded-lg border border-border px-3 py-1.5 text-xs text-text-muted hover:text-text-primary hover:border-border-hover disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+          >
+            Siguiente
           </button>
         </div>
-        <button
-          @click="selectedIds.clear()"
-          class="cursor-pointer text-xs text-text-muted hover:text-text-primary transition-colors"
-        >
-          Cancelar
-        </button>
       </div>
 
-      <div
-        v-if="openDropdownId !== null"
-        class="fixed inset-0 z-20"
-        @click="openDropdownId = null"
-      ></div>
-    </Teleport>
-  </div>
+      <Teleport to="body">
+        <div
+          v-if="previewImage"
+          class="fixed inset-0 z-50 flex items-center justify-center bg-black/70 cursor-pointer"
+          @click="previewImage = null"
+        >
+          <img
+            :src="previewImage"
+            alt="Portada"
+            class="max-w-[85vw] max-h-[85vh] object-contain rounded-lg shadow-2xl cursor-default"
+            @click.stop
+          />
+        </div>
+
+        <div
+          v-if="selectable && selectedIds.size > 0"
+          class="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 flex items-center gap-4 bg-surface-2 border border-border rounded-lg px-5 py-3 shadow-xl"
+        >
+          <span class="text-sm text-text-muted whitespace-nowrap">{{ selectedIds.size }} libro(s) seleccionados</span>
+          <div class="flex items-center gap-2">
+            <button
+              v-for="ba in bulkActions"
+              :key="ba.action"
+              @click="executeBulkAction(ba.action)"
+              :disabled="processing"
+              :class="[
+                'cursor-pointer px-3 py-1.5 rounded-lg text-xs font-medium transition-colors disabled:opacity-40',
+                ba.variant === 'danger'
+                  ? 'text-red-400 hover:bg-red-500/10 border border-red-500/20'
+                  : 'text-accent hover:bg-accent/10 border border-accent/20',
+              ]"
+            >
+              {{ ba.label }}
+            </button>
+          </div>
+          <button
+            @click="selectedIds.clear()"
+            class="cursor-pointer text-xs text-text-muted hover:text-text-primary transition-colors"
+          >
+            Cancelar
+          </button>
+        </div>
+
+        <div
+          v-if="openDropdownId !== null"
+          class="fixed inset-0 z-20"
+          @click="openDropdownId = null"
+        ></div>
+      </Teleport>
+    </div>
+  </template>
 </template>
 
 <script setup lang="ts">
@@ -221,6 +226,7 @@ const props = withDefaults(defineProps<{
   emptyText: 'No hay datos disponibles.',
 })
 
+const loaded = ref(false)
 const previewImage = ref<string | null>(null)
 const processing = ref(false)
 const resultMessage = ref('')
@@ -253,6 +259,7 @@ onMounted(() => {
   actions.value = data.actions ?? []
   selectable.value = data.selectable ?? false
   bulkActions.value = data.bulkActions ?? []
+  loaded.value = true
 })
 
 const page = ref(1)
