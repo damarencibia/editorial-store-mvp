@@ -38,9 +38,7 @@
                 </span>
               </span>
             </th>
-            <th v-if="actions && actions.length > 0" class="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-text-muted">
-              Acciones
-            </th>
+            <th v-if="actions && actions.length > 0" class="px-4 py-3 w-10"></th>
           </tr>
         </thead>
         <tbody class="divide-y divide-border">
@@ -62,29 +60,39 @@
                   class="w-10 h-14 object-cover rounded cursor-pointer"
                   @click.stop="previewImage = row[col.key]"
                 />
-                <button
-                  v-else-if="col.type === 'toggle'"
-                  @click.stop="toggleSingleVisibility(row.id)"
-                  class="cursor-pointer text-lg transition-colors hover:opacity-70"
-                  :title="row[col.key] ? 'Visible' : 'Oculto'"
-                >
-                  {{ row[col.key] ? '👁' : '👁‍🗨' }}
-                </button>
-                <span v-else-if="col.type === 'badge'" class="text-lg" :title="row[col.key] ? 'Más vendido' : ''">
-                  {{ row[col.key] ? '⭐' : '☆' }}
-                </span>
                 <span v-else>{{ formatCell(row[col.key]) }}</span>
               </slot>
             </td>
-            <td v-if="actions && actions.length > 0" class="px-4 py-3 text-right space-x-3">
-              <a
-                v-for="action in actions"
-                :key="action.label"
-                :href="resolveHref(action.href, row)"
-                class="text-xs text-text-muted hover:text-accent transition-colors"
+            <td v-if="actions && actions.length > 0" class="px-4 py-3 text-right relative">
+              <button
+                @click.stop="toggleDropdown(row.id)"
+                class="cursor-pointer px-1.5 py-0.5 rounded text-text-muted hover:text-text-primary hover:bg-surface-2 transition-colors text-lg leading-none select-none"
               >
-                {{ action.label }}
-              </a>
+                ⋮
+              </button>
+              <div
+                v-if="openDropdownId === row.id"
+                class="absolute right-0 top-full mt-1 z-30 min-w-[180px] bg-surface-2 border border-border rounded-lg shadow-xl py-1 origin-top-right"
+                @click.stop
+              >
+                <template v-for="action in actions" :key="action.label">
+                  <a
+                    v-if="action.type === 'link'"
+                    :href="resolveHref(action.href, row)"
+                    class="flex items-center gap-2 px-4 py-2 text-xs text-text-primary hover:bg-surface-3 transition-colors"
+                  >
+                    {{ action.label }}
+                  </a>
+                  <button
+                    v-else-if="action.type === 'toggle'"
+                    @click="executeRowAction(action, row)"
+                    :disabled="processing"
+                    class="flex items-center gap-2 w-full text-left px-4 py-2 text-xs text-text-primary hover:bg-surface-3 transition-colors disabled:opacity-40"
+                  >
+                    {{ row[action.key] ? action.labelAlt : action.label }}
+                  </button>
+                </template>
+              </div>
             </td>
           </tr>
           <tr v-if="rows.length === 0">
@@ -171,6 +179,12 @@
           Cancelar
         </button>
       </div>
+
+      <div
+        v-if="openDropdownId !== null"
+        class="fixed inset-0 z-20"
+        @click="openDropdownId = null"
+      ></div>
     </Teleport>
   </div>
 </template>
@@ -181,12 +195,16 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 interface Column {
   key: string
   label: string
-  type?: 'text' | 'image' | 'toggle' | 'badge'
+  type?: 'text' | 'image'
 }
 
 interface Action {
+  type: 'link' | 'toggle'
   label: string
-  href: string
+  labelAlt?: string
+  href?: string
+  key?: string
+  apiAction?: string
 }
 
 interface BulkAction {
@@ -207,10 +225,12 @@ const previewImage = ref<string | null>(null)
 const processing = ref(false)
 const resultMessage = ref('')
 const resultType = ref<'success' | 'error'>('success')
+const openDropdownId = ref<number | null>(null)
 
 function onKeyDown(e: KeyboardEvent) {
   if (e.key === 'Escape') {
     previewImage.value = null
+    openDropdownId.value = null
   }
 }
 
@@ -292,6 +312,10 @@ const someSelected = computed(() => {
   return currentPageIds.some(id => selectedIds.value.has(id))
 })
 
+function toggleDropdown(id: number) {
+  openDropdownId.value = openDropdownId.value === id ? null : id
+}
+
 function toggleSelectAll() {
   const currentPageIds = sortedRows.value.map(r => r.id)
   if (allSelected.value) {
@@ -315,17 +339,19 @@ function toggleSelect(id: number) {
   selectedIds.value = new Set(selectedIds.value)
 }
 
-async function toggleSingleVisibility(id: number) {
+async function executeRowAction(action: Action, row: Record<string, any>) {
+  if (!action.apiAction) return
   processing.value = true
+  openDropdownId.value = null
   try {
     const res = await fetch('/api/admin/books/bulk', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'toggle_visibility', ids: [id] }),
+      body: JSON.stringify({ action: action.apiAction, ids: [row.id] }),
     })
     if (!res.ok) {
       const data = await res.json()
-      throw new Error(data.error || 'Error al cambiar visibilidad')
+      throw new Error(data.error || 'Error al ejecutar acción')
     }
     window.location.reload()
   } catch (err: any) {

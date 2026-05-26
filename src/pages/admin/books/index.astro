@@ -37,20 +37,19 @@ const columns = [
   { key: 'category', label: 'Categoría' },
   { key: 'price', label: 'Precio' },
   { key: 'sales_count', label: 'Ventas' },
-  { key: 'is_visible', label: 'Visible', type: 'toggle' },
-  { key: 'is_best_seller', label: 'Más vendido', type: 'badge' },
   { key: 'created_at', label: 'Creado' },
 ]
 
 const actions = [
-  { label: 'Editar', href: '/admin/books/{id}' },
+  { type: 'toggle', label: 'Mostrar', labelAlt: 'Ocultar', key: 'is_visible', apiAction: 'toggle_visibility' },
+  { type: 'toggle', label: 'Marcar más vendido', labelAlt: 'Quitar más vendido', key: 'is_best_seller', apiAction: 'toggle_best_seller' },
+  { type: 'link', label: 'Editar', href: '/admin/books/{id}' },
 ]
 
 const selectable = true
 const bulkActions = [
   { action: 'toggle_visibility', label: 'Mostrar/Ocultar' },
-  { action: 'mark_best_seller', label: 'Marcar más vendido' },
-  { action: 'remove_best_seller', label: 'Quitar más vendido' },
+  { action: 'toggle_best_seller', label: 'Marcar/Quitar más vendido' },
   { action: 'delete', label: 'Eliminar', variant: 'danger' },
 ]
 ---
