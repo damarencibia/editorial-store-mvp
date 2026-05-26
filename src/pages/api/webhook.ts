@@ -42,7 +42,7 @@ export const POST: APIRoute = async ({ request }) => {
 
     for (const item of items) {
       await supabase.rpc('increment_sales_count', {
-        book_id: item.book_id,
+        book_id: item.bookId,
         quantity: item.quantity,
       })
     }
