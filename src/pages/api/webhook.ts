@@ -1,6 +1,6 @@
 import type { APIRoute } from 'astro'
 import { stripe } from '../../lib/stripe'
-import { supabase } from '../../lib/supabase'
+import { supabaseAdmin } from '../../lib/supabase-admin'
 
 export const POST: APIRoute = async ({ request }) => {
   const body = await request.text()
@@ -27,7 +27,7 @@ export const POST: APIRoute = async ({ request }) => {
       ? JSON.parse(session.metadata.items)
       : []
 
-    const { error } = await supabase.from('orders').insert({
+    const { error } = await supabaseAdmin.from('orders').insert({
       customer_email: session.customer_details?.email ?? null,
       items,
       total: session.amount_total ?? 0,
@@ -40,16 +40,7 @@ export const POST: APIRoute = async ({ request }) => {
       return new Response(JSON.stringify({ error: 'Failed to save order' }), { status: 500 })
     }
 
-    for (const item of items) {
-      await supabase.rpc('increment_sales_count', {
-        book_id: item.bookId,
-        quantity: item.quantity,
-      })
-    }
-
-    await supabase.rpc('sync_best_sellers')
-
-    console.log('Order saved and sales updated:', session.id)
+    console.log('Order saved — trigger trg_process_order_sales will update sales_count:', session.id)
   }
 
   return new Response(JSON.stringify({ received: true }), {
