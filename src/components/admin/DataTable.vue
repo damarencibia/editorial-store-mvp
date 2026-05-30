@@ -193,17 +193,17 @@
 
         <div
           v-if="selectable && selectedIds.size > 0"
-          class="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 flex items-center gap-4 bg-surface-2 border border-border rounded-lg px-5 py-3 shadow-xl"
+          class="fixed bottom-0 sm:bottom-6 left-0 sm:left-1/2 sm:-translate-x-1/2 z-40 w-full sm:w-auto flex flex-col sm:flex-row items-center gap-1.5 sm:gap-4 bg-surface-2 border-t sm:border sm:border-border sm:rounded-lg px-4 py-3 shadow-xl"
         >
-          <span class="text-sm text-text-muted whitespace-nowrap">{{ selectedIds.size }} libro(s) seleccionados</span>
-          <div class="flex items-center gap-2">
+          <span class="text-xs sm:text-sm text-text-muted whitespace-nowrap">{{ selectedIds.size }} {{ selectedIds.size === 1 ? 'libro' : 'libros' }} seleccionados</span>
+          <div class="flex items-center gap-1.5 sm:gap-2">
             <button
               v-for="ba in bulkActions"
               :key="ba.action"
               @click="executeBulkAction(ba.action)"
               :disabled="processing"
               :class="[
-                'cursor-pointer px-3 py-1.5 rounded-lg text-xs font-medium transition-colors disabled:opacity-40',
+                'cursor-pointer px-2 sm:px-3 py-1.5 rounded-lg text-xs font-medium transition-colors disabled:opacity-40',
                 ba.variant === 'danger'
                   ? 'text-red-400 hover:bg-red-500/10 border border-red-500/20'
                   : 'text-accent hover:bg-accent/10 border border-accent/20',
@@ -218,6 +218,14 @@
           >
             Cancelar
           </button>
+        </div>
+
+        <div
+          v-if="processing"
+          class="fixed inset-0 z-[60] flex flex-col items-center justify-center bg-black/60"
+        >
+          <div class="h-8 w-8 animate-spin rounded-full border-2 border-accent border-t-transparent"></div>
+          <p class="mt-3 text-sm text-text-muted">Eliminando...</p>
         </div>
 
         <div
@@ -505,11 +513,7 @@ async function executeBulkDelete() {
       throw new Error(data.error || 'Error al eliminar')
     }
     selectedIds.value = new Set()
-    resultMessage.value = 'Libros eliminados correctamente.'
-    resultType.value = 'success'
-    setTimeout(() => {
-      window.location.reload()
-    }, 1000)
+    window.location.reload()
   } catch (err: any) {
     resultMessage.value = err.message
     resultType.value = 'error'

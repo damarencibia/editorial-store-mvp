@@ -33,6 +33,7 @@ const { data: categories } = await supabase.from('categories').select('id, name,
       </div>
       <button
         id="delete-book-btn"
+        data-book-id={bookId}
         class="cursor-pointer rounded-lg border border-red-500/20 px-3 py-1.5 text-xs font-medium text-red-400 hover:bg-red-500/5 transition-colors"
       >
         Eliminar libro
@@ -82,9 +83,8 @@ const { data: categories } = await supabase.from('categories').select('id, name,
 </AdminLayout>
 
 <script>
-const BOOK_ID = {bookId}
-
 const deleteBtn = document.getElementById('delete-book-btn')
+const BOOK_ID = Number(deleteBtn?.dataset.bookId)
 const deleteModal = document.getElementById('delete-modal')
 const loadingOverlay = document.getElementById('loading-overlay')
 const cancelDelete = document.getElementById('cancel-delete')

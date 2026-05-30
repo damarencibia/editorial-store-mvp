@@ -32,7 +32,7 @@ export const POST: APIRoute = async ({ request }) => {
 
   try {
     const body = await request.json()
-    const { action, ids } = body
+    const { action, ids, delete_images } = body
 
     if (!action || !Array.isArray(ids) || ids.length === 0) {
       return new Response(JSON.stringify({ error: 'Faltan campos obligatorios' }), { status: 400, headers })
@@ -81,8 +81,7 @@ export const POST: APIRoute = async ({ request }) => {
       }
 
       case 'delete': {
-        const body = await request.json()
-        const deleteImages = body.delete_images === true
+        const deleteImages = delete_images === true
 
         const { data: books } = await serverSupabase
           .from('books')
