@@ -34,7 +34,7 @@ export const GET: APIRoute = async ({ request }) => {
   if (authError) return authError
 
   const { data, error } = await serverSupabase
-    .from('categories')
+    .from('collections')
     .select('*')
     .order('name')
 
@@ -62,21 +62,18 @@ export const POST: APIRoute = async ({ request }) => {
     }
 
     const slug = body.slug?.trim() || slugify(name)
-
-    const collection_id = body.collection_id ? Number(body.collection_id) : null
-    if (!collection_id) {
-      return new Response(JSON.stringify({ error: 'La colección es obligatoria' }), { status: 400, headers })
-    }
+    const description = body.description?.trim() || null
+    const cover_url = body.cover_url?.trim() || null
 
     const { data, error } = await serverSupabase
-      .from('categories')
-      .insert({ name, slug, collection_id })
+      .from('collections')
+      .insert({ name, slug, description, cover_url })
       .select()
       .single()
 
     if (error) {
       if (error.code === '23505') {
-        return new Response(JSON.stringify({ error: 'Ya existe una categoría con ese slug en esta colección' }), { status: 409, headers })
+        return new Response(JSON.stringify({ error: 'Ya existe una colección con ese slug' }), { status: 409, headers })
       }
       return new Response(JSON.stringify({ error: error.message }), { status: 400, headers })
     }

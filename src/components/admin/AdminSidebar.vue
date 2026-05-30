@@ -164,14 +164,16 @@ const icons: Record<string, string> = {
   clipboard: '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 14l2 2 4-4"/></svg>',
   users: '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><circle cx="16" cy="7" r="4"/></svg>',
   store: '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>',
+  image: '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>',
 }
 
 const navItems = [
   { href: '/admin', label: 'Dashboard', icon: 'dashboard', match: (p: string) => p === '/admin' },
   { href: '/admin/books', label: 'Libros', icon: 'book', match: (p: string) => p.startsWith('/admin/books') },
-  { href: '/admin/categories', label: 'Categorías', icon: 'folder', match: (p: string) => p.startsWith('/admin/categories') },
+  { href: '/admin/collections', label: 'Colecciones', icon: 'folder', match: (p: string) => p.startsWith('/admin/collections') },
   { href: '/admin/orders', label: 'Órdenes', icon: 'clipboard', match: (p: string) => p === '/admin/orders' },
   { href: '/admin/customers', label: 'Clientes', icon: 'users', match: (p: string) => p === '/admin/customers' },
+  { href: '/admin/storage', label: 'Imágenes', icon: 'image', match: (p: string) => p.startsWith('/admin/storage') },
 ]
 
 function togglePinned() {

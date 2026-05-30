@@ -1,0 +1,412 @@
+---
+import AdminLayout from '../../../layouts/AdminLayout.astro'
+import { getServerSupabase } from '../../../lib/auth'
+import { getServerProfile } from '../../../lib/profiles'
+
+const supabase = getServerSupabase(Astro.request, (name, value, options) => {
+  Astro.cookies.set(name, value, options as any)
+})
+const profile = await getServerProfile(supabase)
+if (!profile || profile.role !== 'admin') return Astro.redirect('/')
+
+const { data: files, error } = await supabase.storage.from('book-covers').list()
+
+const supabaseUrl = import.meta.env.PUBLIC_SUPABASE_URL
+const storagePath = `${supabaseUrl}/storage/v1/object/public/book-covers/`
+
+type ImageInfo = {
+  name: string
+  id: string
+  created_at: string
+  size: number
+  mimetype: string
+  url: string
+  bookCount: number
+  collectionCount: number
+}
+
+const images: ImageInfo[] = []
+
+if (!error && files) {
+  for (const f of files) {
+    const fileName = f.name
+    const url = `${storagePath}${fileName}`
+
+    const { count: bookCount } = await supabase
+      .from('books')
+      .select('id', { count: 'exact', head: true })
+      .eq('cover_url', url)
+
+    const { count: collectionCount } = await supabase
+      .from('collections')
+      .select('id', { count: 'exact', head: true })
+      .eq('cover_url', url)
+
+    images.push({
+      name: fileName,
+      id: f.id,
+      created_at: f.created_at,
+      size: f.metadata?.size ?? 0,
+      mimetype: f.metadata?.mimetype ?? 'image/jpeg',
+      url,
+      bookCount: bookCount ?? 0,
+      collectionCount: collectionCount ?? 0,
+    })
+  }
+
+  images.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+}
+
+function formatSize(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
+}
+---
+
+<AdminLayout>
+  <title>Imágenes — Admin</title>
+
+  <div class="max-w-6xl">
+    <div class="flex items-center justify-between mb-6">
+      <h1 class="font-heading text-2xl font-bold tracking-tight">Imágenes</h1>
+      <span class="text-sm text-text-muted">{images.length} {images.length === 1 ? 'archivo' : 'archivos'}</span>
+    </div>
+
+    <div id="filters" class="flex flex-wrap items-center gap-3 mb-6">
+      <div class="relative flex-1 min-w-[200px] max-w-xs">
+        <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted pointer-events-none" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="text" id="search-input" placeholder="Buscar por nombre..." class="w-full rounded-lg border border-border bg-surface-2 pl-9 pr-3 py-2 text-sm text-text-primary placeholder:text-text-dim focus:outline-none focus:border-accent transition-colors" />
+      </div>
+      <select id="usage-filter" class="rounded-lg border border-border bg-surface-2 px-3 py-2 text-sm text-text-primary focus:outline-none focus:border-accent transition-colors">
+        <option value="all">Todos</option>
+        <option value="in-use">En uso</option>
+        <option value="unused">Sin uso</option>
+      </select>
+      <select id="sort-select" class="rounded-lg border border-border bg-surface-2 px-3 py-2 text-sm text-text-primary focus:outline-none focus:border-accent transition-colors">
+        <option value="newest">Más recientes</option>
+        <option value="oldest">Más antiguos</option>
+        <option value="name-asc">Nombre A-Z</option>
+        <option value="name-desc">Nombre Z-A</option>
+        <option value="size-desc">Mayor tamaño</option>
+        <option value="size-asc">Menor tamaño</option>
+      </select>
+    </div>
+
+    {error && (
+      <div class="rounded-lg border border-red-500/20 bg-red-500/5 px-5 py-4 text-sm text-red-400 mb-8">
+        Error al cargar imágenes: {error.message}
+      </div>
+    )}
+
+    {images.length === 0 && !error && (
+      <div class="py-16 text-center text-text-muted">
+        <p>No hay imágenes en el almacenamiento.</p>
+      </div>
+    )}
+
+    <div id="bulk-bar" class="hidden items-center justify-between mb-4 rounded-lg bg-accent/10 border border-accent/20 px-4 py-3 transition-all duration-200">
+      <div class="flex items-center gap-3">
+        <button id="select-all-btn" class="cursor-pointer text-sm text-accent hover:text-accent/80 font-medium transition-colors">
+          Seleccionar todos
+        </button>
+        <span id="selected-count" class="text-sm text-text-muted">0 seleccionados</span>
+      </div>
+      <button id="bulk-delete-btn" class="cursor-pointer rounded-lg border border-red-500/20 px-3 py-1.5 text-xs font-medium text-red-400 hover:bg-red-500/5 transition-colors">
+        Eliminar seleccionados
+      </button>
+    </div>
+
+    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+      {images.map((img) => (
+        <div
+          class="img-card group relative rounded-xl border-2 border-border bg-surface-2 overflow-hidden cursor-pointer transition-all duration-150 hover:border-accent/30"
+          data-name={img.name}
+          data-books={img.bookCount}
+          data-collections={img.collectionCount}
+          data-size={img.size}
+        >
+          <div class="absolute top-2 left-2 z-10 opacity-0 max-md:opacity-100 group-hover:opacity-100 transition-opacity pointer-events-none selected:opacity-100">
+            <div class="flex items-center justify-center w-6 h-6 rounded-full bg-accent text-white text-xs font-bold shadow-lg backdrop-blur-sm">
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            </div>
+          </div>
+          <div class="absolute top-2 right-2 z-10 opacity-0 max-md:opacity-100 group-hover:opacity-100 transition-opacity">
+            <button
+              class="delete-btn cursor-pointer rounded-lg bg-red-500/80 px-2.5 py-1 text-xs text-white hover:bg-red-500 transition-colors shadow-lg backdrop-blur-sm"
+              data-name={img.name}
+            >
+              Eliminar
+            </button>
+          </div>
+          <div class="aspect-[4/3] overflow-hidden bg-surface-3">
+            <img
+              src={img.url}
+              alt={img.name}
+              class="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300"
+              loading="lazy"
+            />
+          </div>
+          <div class="p-3 space-y-1">
+            <p class="text-xs text-text-primary truncate font-medium" title={img.name}>{img.name}</p>
+            <p class="text-[10px] text-text-dim space-y-0.5">
+              <span class="block">{formatSize(img.size)}</span>
+              <span class="block">{new Date(img.created_at).toLocaleDateString('es-ES')}</span>
+            </p>
+            <div class="flex flex-wrap gap-1 pt-1">
+              {img.bookCount > 0 && (
+                <span class="inline-block rounded-full bg-accent/10 px-2 py-0.5 text-[10px] text-accent font-medium">
+                  {img.bookCount} {img.bookCount === 1 ? 'libro' : 'libros'}
+                </span>
+              )}
+              {img.collectionCount > 0 && (
+                <span class="inline-block rounded-full bg-accent/10 px-2 py-0.5 text-[10px] text-accent font-medium">
+                  {img.collectionCount} {img.collectionCount === 1 ? 'colección' : 'colecciones'}
+                </span>
+              )}
+              {img.bookCount === 0 && img.collectionCount === 0 && (
+                <span class="inline-block rounded-full bg-yellow-500/10 px-2 py-0.5 text-[10px] text-yellow-500 font-medium">
+                  Sin uso
+                </span>
+              )}
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+  </div>
+
+  <div id="delete-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/60">
+    <div class="max-w-md w-full mx-4 rounded-xl bg-surface-2 border border-border p-6 shadow-2xl">
+      <h3 class="font-heading text-lg font-semibold mb-2">Eliminar imágenes</h3>
+      <p id="delete-msg" class="text-sm text-text-muted mb-6"></p>
+      <div id="delete-warning" class="hidden mb-4 rounded-lg border border-yellow-500/20 bg-yellow-500/5 px-4 py-3 text-xs text-yellow-400"></div>
+      <div class="flex items-center justify-end gap-3">
+        <button id="cancel-delete" class="cursor-pointer rounded-lg px-4 py-2 text-sm text-text-muted hover:text-text-primary transition-colors">
+          Cancelar
+        </button>
+        <button id="confirm-delete" class="cursor-pointer rounded-lg bg-red-500 px-4 py-2 text-sm font-medium text-white hover:bg-red-600 transition-colors">
+          Eliminar
+        </button>
+      </div>
+    </div>
+  </div>
+</AdminLayout>
+
+<style>
+.img-card.selected {
+  border-color: var(--color-accent, #6366f1);
+  background: color-mix(in srgb, var(--color-accent, #6366f1) 5%, transparent);
+}
+</style>
+
+<script>
+const searchInput = document.getElementById('search-input') as HTMLInputElement
+const usageFilter = document.getElementById('usage-filter') as HTMLSelectElement
+const sortSelect = document.getElementById('sort-select') as HTMLSelectElement
+const grid = document.querySelector('.grid')
+const bulkBar = document.getElementById('bulk-bar')!
+const selectAllBtn = document.getElementById('select-all-btn')!
+const selectedCount = document.getElementById('selected-count')!
+const bulkDeleteBtn = document.getElementById('bulk-delete-btn')!
+const deleteModal = document.getElementById('delete-modal')!
+const deleteMsg = document.getElementById('delete-msg')!
+const deleteWarning = document.getElementById('delete-warning')!
+const confirmDelete = document.getElementById('confirm-delete')!
+const cancelDelete = document.getElementById('cancel-delete')!
+
+let pendingNames: string[] = []
+
+function getCards(): HTMLElement[] {
+  return Array.from(document.querySelectorAll<HTMLElement>('.img-card'))
+}
+function getVisibleCards(): HTMLElement[] {
+  return getCards().filter(c => c.style.display !== 'none')
+}
+function getSelectedNames(): string[] {
+  return getCards()
+    .filter(c => c.classList.contains('selected'))
+    .map(c => c.dataset.name!)
+    .filter(Boolean)
+}
+
+function toggleCard(card: HTMLElement) {
+  card.classList.toggle('selected')
+  updateBulkBar()
+}
+
+function selectAllVisible() {
+  const visible = getVisibleCards()
+  const allSelected = visible.every(c => c.classList.contains('selected'))
+  visible.forEach(c => c.classList.toggle('selected', !allSelected))
+  updateBulkBar()
+}
+
+function updateBulkBar() {
+  const selected = getSelectedNames()
+  if (selected.length === 0) {
+    bulkBar.classList.remove('flex')
+    bulkBar.classList.add('hidden')
+  } else {
+    bulkBar.classList.remove('hidden')
+    bulkBar.classList.add('flex')
+    selectedCount.textContent = `${selected.length} ${selected.length === 1 ? 'seleccionado' : 'seleccionados'}`
+  }
+}
+
+function applyFilters() {
+  const query = searchInput.value.toLowerCase().trim()
+  const usage = usageFilter.value
+
+  getCards().forEach(card => {
+    const name = card.dataset.name ?? ''
+    const books = parseInt(card.dataset.books || '0')
+    const collections = parseInt(card.dataset.collections || '0')
+    const inUse = books > 0 || collections > 0
+
+    const matchesSearch = name.toLowerCase().includes(query)
+    const matchesUsage = usage === 'all' || (usage === 'in-use' && inUse) || (usage === 'unused' && !inUse)
+
+    card.style.display = matchesSearch && matchesUsage ? '' : 'none'
+  })
+
+  applySort()
+  updateBulkBar()
+}
+
+function applySort() {
+  const sort = sortSelect.value
+  const cards = getCards().filter(c => c.style.display !== 'none')
+  const parent = grid!
+
+  cards.sort((a, b) => {
+    const aName = a.dataset.name ?? ''
+    const bName = b.dataset.name ?? ''
+    switch (sort) {
+      case 'newest': return indexOf(a) < indexOf(b) ? 1 : -1
+      case 'oldest': return indexOf(a) > indexOf(b) ? 1 : -1
+      case 'name-asc': return aName.localeCompare(bName)
+      case 'name-desc': return bName.localeCompare(aName)
+      case 'size-desc': {
+        const aSize = parseInt(a.dataset.size || '0')
+        const bSize = parseInt(b.dataset.size || '0')
+        return bSize - aSize
+      }
+      case 'size-asc': {
+        const aSize = parseInt(a.dataset.size || '0')
+        const bSize = parseInt(b.dataset.size || '0')
+        return aSize - bSize
+      }
+      default: return 0
+    }
+  })
+
+  cards.forEach(c => parent!.appendChild(c))
+}
+
+let _origIndex: Map<HTMLElement, number> | null = null
+function indexOf(el: HTMLElement): number {
+  if (!_origIndex) {
+    _origIndex = new Map()
+    getCards().forEach((c, i) => _origIndex!.set(c, i))
+  }
+  return _origIndex.get(el) ?? 0
+}
+
+// Card click → toggle selection (unless clicking a delete button)
+document.addEventListener('click', (e) => {
+  const card = (e.target as HTMLElement).closest<HTMLElement>('.img-card')
+  if (!card) return
+
+  const deleteBtn = (e.target as HTMLElement).closest('.delete-btn')
+  if (deleteBtn) {
+    e.stopPropagation()
+    return
+  }
+
+  toggleCard(card)
+})
+
+// Individual delete
+document.addEventListener('click', (e) => {
+  const btn = (e.target as HTMLElement).closest('.delete-btn') as HTMLElement | null
+  if (!btn) return
+
+  const name = btn.dataset.name
+  if (!name) return
+
+  pendingNames = [name]
+  deleteMsg.textContent = '¿Eliminar 1 imagen del almacenamiento? No se puede deshacer.'
+  deleteWarning.classList.add('hidden')
+  deleteModal.classList.remove('hidden')
+})
+
+// Filters
+searchInput?.addEventListener('input', applyFilters)
+usageFilter?.addEventListener('change', applyFilters)
+sortSelect?.addEventListener('change', applySort)
+
+// Select all
+selectAllBtn?.addEventListener('click', selectAllVisible)
+
+// Bulk delete
+bulkDeleteBtn?.addEventListener('click', () => {
+  const names = getSelectedNames()
+  if (names.length === 0) return
+
+  pendingNames = names
+
+  const inUse = pendingNames.some(name => {
+    const card = getCards().find(c => c.dataset.name === name)
+    return card && (parseInt(card.dataset.books || '0') > 0 || parseInt(card.dataset.collections || '0') > 0)
+  })
+
+  deleteMsg.textContent = `¿Eliminar ${pendingNames.length} ${pendingNames.length === 1 ? 'imagen' : 'imágenes'} del almacenamiento?`
+
+  if (inUse) {
+    deleteWarning.innerHTML = `
+      <strong>Advertencia:</strong> Algunas imágenes están en uso. Al eliminarlas,
+      las referencias quedarán rotas (mostrarán imagen no disponible).
+      Deberás actualizar cada registro manualmente.
+    `
+    deleteWarning.classList.remove('hidden')
+  } else {
+    deleteWarning.classList.add('hidden')
+  }
+
+  deleteModal.classList.remove('hidden')
+})
+
+// Modal
+function closeModal() {
+  deleteModal.classList.add('hidden')
+  pendingNames = []
+}
+
+cancelDelete?.addEventListener('click', closeModal)
+deleteModal.addEventListener('click', (e) => {
+  if (e.target === deleteModal) closeModal()
+})
+
+confirmDelete?.addEventListener('click', async () => {
+  if (pendingNames.length === 0) return
+
+  try {
+    const res = await fetch('/api/admin/storage', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ names: pendingNames }),
+    })
+    if (!res.ok) {
+      const data = await res.json()
+      alert(data.error || 'Error al eliminar')
+      closeModal()
+      return
+    }
+    window.location.reload()
+  } catch {
+    alert('Error al eliminar las imágenes')
+    closeModal()
+  }
+})
+</script>

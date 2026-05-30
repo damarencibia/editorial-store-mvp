@@ -46,22 +46,19 @@ export const PUT: APIRoute = async ({ params, request }) => {
     }
 
     const slug = body.slug?.trim() || slugify(name)
-
-    const collection_id = body.collection_id ? Number(body.collection_id) : null
-
-    const updateData: Record<string, any> = { name, slug }
-    if (collection_id) updateData.collection_id = collection_id
+    const description = body.description?.trim() || null
+    const cover_url = body.cover_url?.trim() || null
 
     const { data, error } = await serverSupabase
-      .from('categories')
-      .update(updateData)
+      .from('collections')
+      .update({ name, slug, description, cover_url })
       .eq('id', id)
       .select()
       .single()
 
     if (error) {
       if (error.code === '23505') {
-        return new Response(JSON.stringify({ error: 'Ya existe una categoría con ese slug en esta colección' }), { status: 409, headers })
+        return new Response(JSON.stringify({ error: 'Ya existe una colección con ese slug' }), { status: 409, headers })
       }
       return new Response(JSON.stringify({ error: error.message }), { status: 400, headers })
     }
@@ -87,70 +84,24 @@ export const DELETE: APIRoute = async ({ params, request }) => {
   }
 
   const { count } = await serverSupabase
-    .from('books')
+    .from('categories')
     .select('id', { count: 'exact', head: true })
-    .eq('category_id', id)
+    .eq('collection_id', id)
 
   if (count && count > 0) {
     return new Response(
       JSON.stringify({
-        error: `No se puede eliminar la categoría porque tiene ${count} libro(s) asociado(s).`,
+        error: `No se puede eliminar la colección porque tiene ${count} categoría(s) asociada(s).`,
       }),
       { status: 409, headers },
     )
   }
 
-  const { error } = await serverSupabase.from('categories').delete().eq('id', id)
+  const { error } = await serverSupabase.from('collections').delete().eq('id', id)
 
   if (error) {
     return new Response(JSON.stringify({ error: error.message }), { status: 400, headers })
   }
 
   return new Response(JSON.stringify({ deleted: true }), { status: 200, headers })
-}
-
-export const POST: APIRoute = async ({ params, request }) => {
-  const headers = new Headers()
-  const serverSupabase = getServerSupabase(request, (name, value, options) => {
-    headers.append('Set-Cookie', serializeCookie(name, value, options))
-  })
-
-  const url = new URL(request.url)
-  const method = url.searchParams.get('_method')
-  const collectionId = url.searchParams.get('collection_id')
-
-  if (method === 'DELETE') {
-    const authError = await checkAdmin(serverSupabase, headers)
-    if (authError) return authError
-
-    const id = Number(params.id)
-    if (!id) {
-      return new Response(JSON.stringify({ error: 'ID inválido' }), { status: 400, headers })
-    }
-
-    const { count } = await serverSupabase
-      .from('books')
-      .select('id', { count: 'exact', head: true })
-      .eq('category_id', id)
-
-    if (count && count > 0) {
-      return new Response(
-        JSON.stringify({
-          error: `No se puede eliminar la categoría porque tiene ${count} libro(s) asociado(s).`,
-        }),
-        { status: 409, headers },
-      )
-    }
-
-    const { error } = await serverSupabase.from('categories').delete().eq('id', id)
-    if (error) {
-      return new Response(JSON.stringify({ error: error.message }), { status: 400, headers })
-    }
-
-    const redirectTo = collectionId ? `/admin/collections/${collectionId}` : '/admin/collections'
-    headers.set('Location', redirectTo)
-    return new Response(null, { status: 302, headers })
-  }
-
-  return new Response(JSON.stringify({ error: 'Método no permitido' }), { status: 405, headers })
 }

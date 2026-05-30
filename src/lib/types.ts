@@ -1,3 +1,20 @@
+export interface Collection {
+  id: number
+  name: string
+  slug: string
+  description: string | null
+  cover_url: string | null
+  created_at: string
+}
+
+export interface Category {
+  id: number
+  name: string
+  slug: string
+  collection_id: number
+  created_at: string
+}
+
 export interface Book {
   id: number
   slug: string
@@ -6,6 +23,7 @@ export interface Book {
   description: string | null
   price: number
   cover_url: string | null
+  category_id: number | null
   created_at?: string
 }
 

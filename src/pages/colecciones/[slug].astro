@@ -1,0 +1,87 @@
+---
+import StoreLayout from '../../layouts/StoreLayout.astro'
+import BookCard from '../../components/store/BookCard.vue'
+import { supabase } from '../../lib/supabase'
+
+const { slug } = Astro.params
+
+const { data: collection } = await supabase
+  .from('collections')
+  .select('*')
+  .eq('slug', slug)
+  .single()
+
+if (!collection) {
+  return Astro.redirect('/colecciones')
+}
+
+const { data: categories } = await supabase
+  .from('categories')
+  .select('*')
+  .eq('collection_id', collection.id)
+  .order('name')
+
+const categoryIds = (categories ?? []).map((c) => c.id)
+
+const { data: books } = await supabase
+  .from('books')
+  .select('*, categories(name, slug)')
+  .eq('is_visible', true)
+  .in('category_id', categoryIds.length > 0 ? categoryIds : [0])
+  .order('title')
+
+const byCategory: Record<number, { name: string; slug: string; books: any[] }> = {}
+for (const cat of categories ?? []) {
+  byCategory[cat.id] = { name: cat.name, slug: cat.slug, books: [] }
+}
+
+for (const book of books ?? []) {
+  if (book.category_id && byCategory[book.category_id]) {
+    byCategory[book.category_id].books.push(book)
+  }
+}
+
+const grouped = Object.values(byCategory).filter((g) => g.books.length > 0)
+const totalBooks = (books ?? []).length
+---
+
+<StoreLayout>
+  <title>{collection.name} — Editorial</title>
+
+  <section>
+    <a href="/colecciones" class="inline-flex items-center gap-1 text-sm text-text-muted hover:text-text-primary transition-colors mb-6">
+      &larr; Todas las colecciones
+    </a>
+
+    <div class="mb-10">
+      {collection.cover_url && (
+        <div class="aspect-[4/1] rounded-xl overflow-hidden mb-6">
+          <img src={collection.cover_url} alt={collection.name} class="h-full w-full object-cover" />
+        </div>
+      )}
+      <h1 class="font-heading text-3xl sm:text-4xl font-bold tracking-tight">{collection.name}</h1>
+      {collection.description && (
+        <p class="mt-2 text-text-muted max-w-2xl">{collection.description}</p>
+      )}
+      <p class="mt-2 text-sm text-text-dim">{totalBooks} {totalBooks === 1 ? 'libro' : 'libros'}</p>
+    </div>
+
+    {grouped.length === 0 && (
+      <p class="text-center py-16 text-text-muted">No hay libros en esta colección.</p>
+    )}
+
+    {grouped.map((group) => (
+      <div class="mb-10">
+        <div class="flex items-center gap-2 mb-4">
+          <h2 class="font-heading text-xl font-semibold">{group.name}</h2>
+          <span class="text-xs text-text-muted">({group.books.length})</span>
+        </div>
+        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
+          {group.books.map((book) => (
+            <BookCard book={book} client:only="vue" />
+          ))}
+        </div>
+      </div>
+    ))}
+  </section>
+</StoreLayout>

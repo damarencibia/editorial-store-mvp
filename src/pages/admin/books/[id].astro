@@ -18,7 +18,8 @@ if (!book) {
   return Astro.redirect('/admin/books')
 }
 
-const { data: categories } = await supabase.from('categories').select('id, name').order('name')
+const { data: collections } = await supabase.from('collections').select('id, name').order('name')
+const { data: categories } = await supabase.from('categories').select('id, name, collection_id').order('name')
 ---
 
 <AdminLayout>
@@ -34,12 +35,17 @@ const { data: categories } = await supabase.from('categories').select('id, name'
         method="POST"
         action={`/api/admin/books/${bookId}?_method=DELETE`}
         onsubmit="return confirm('¿Eliminar este libro? Esta acción no se puede deshacer.')"
+        class="flex flex-col items-end gap-2"
       >
+        <label class="flex items-center gap-2 cursor-pointer select-none">
+          <input type="checkbox" name="delete_image" value="true" class="rounded border-border accent-accent" />
+          <span class="text-xs text-text-muted">Eliminar también la imagen del almacenamiento</span>
+        </label>
         <button
           type="submit"
           class="cursor-pointer rounded-lg border border-red-500/20 px-3 py-1.5 text-xs font-medium text-red-400 hover:bg-red-500/5 transition-colors"
         >
-          Eliminar
+          Eliminar libro
         </button>
       </form>
     </div>
@@ -55,6 +61,7 @@ const { data: categories } = await supabase.from('categories').select('id, name'
       isVisible: book.is_visible ?? true,
       manualBestSeller: book.manual_best_seller ?? false,
     })}></script>
+    <script id="collections-data" type="application/json" set:html={JSON.stringify(collections ?? [])}></script>
     <script id="categories-data" type="application/json" set:html={JSON.stringify(categories ?? [])}></script>
   </div>
 </AdminLayout>

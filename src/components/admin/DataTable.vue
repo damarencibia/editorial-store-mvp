@@ -13,7 +13,9 @@
         {{ resultMessage }}
       </div>
 
-      <div class="overflow-x-auto rounded-lg border border-border">
+      <div
+        :class="openDropdownId !== null ? 'overflow-visible rounded-lg border border-border' : 'overflow-x-auto rounded-lg border border-border'"
+      >
         <table class="w-full text-sm">
           <thead>
             <tr class="border-b border-border bg-surface-2">

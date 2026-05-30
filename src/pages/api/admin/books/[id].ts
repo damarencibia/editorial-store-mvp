@@ -107,6 +107,37 @@ export const POST: APIRoute = async ({ params, request }) => {
       return new Response(JSON.stringify({ error: 'ID inválido' }), { status: 400, headers })
     }
 
+    const formData = await request.formData()
+    const deleteImage = formData.get('delete_image') === 'true'
+
+    if (deleteImage) {
+      const { data: book } = await serverSupabase
+        .from('books')
+        .select('cover_url')
+        .eq('id', id)
+        .single()
+
+      if (book?.cover_url) {
+        const fileName = book.cover_url.split('/').pop()
+        if (fileName) {
+          const { count: bookCount } = await serverSupabase
+            .from('books')
+            .select('id', { count: 'exact', head: true })
+            .eq('cover_url', book.cover_url)
+            .neq('id', id)
+
+          const { count: collCount } = await serverSupabase
+            .from('collections')
+            .select('id', { count: 'exact', head: true })
+            .eq('cover_url', book.cover_url)
+
+          if ((bookCount ?? 0) === 0 && (collCount ?? 0) === 0) {
+            await serverSupabase.storage.from('book-covers').remove([fileName])
+          }
+        }
+      }
+    }
+
     const { error } = await serverSupabase.from('books').delete().eq('id', id)
 
     if (error) {

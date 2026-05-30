@@ -4,15 +4,28 @@
       id="name"
       label="Nombre"
       v-model="name"
-      placeholder="Ficción científica"
+      placeholder="Clásicos universales"
       :error="errors.name"
     />
     <FormField
       id="slug"
       label="Slug"
       v-model="slug"
-      placeholder="ficcion-cientifica"
+      placeholder="clasicos-universales"
       :error="errors.slug"
+    />
+    <FormField
+      id="description"
+      label="Descripción"
+      type="textarea"
+      v-model="description"
+      placeholder="Breve descripción de la colección..."
+      :error="errors.description"
+    />
+    <ImageUpload
+      v-model="coverUrl"
+      label="Portada"
+      :error="errors.coverUrl"
     />
 
     <p v-if="submitError" class="text-sm text-red-400">{{ submitError }}</p>
@@ -23,10 +36,10 @@
         :disabled="submitting"
         class="cursor-pointer rounded-lg bg-accent px-5 py-2.5 text-sm font-medium text-white hover:bg-accent/90 disabled:opacity-50 transition-colors"
       >
-        {{ submitting ? 'Guardando...' : (isEditing ? 'Actualizar categoría' : 'Crear categoría') }}
+        {{ submitting ? 'Guardando...' : (isEditing ? 'Actualizar colección' : 'Crear colección') }}
       </button>
       <a
-        :href="cancelHref"
+        href="/admin/collections"
         class="text-sm text-text-muted hover:text-text-primary transition-colors"
       >
         Cancelar
@@ -36,8 +49,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, onMounted } from 'vue'
+import { ref, watch, onMounted } from 'vue'
 import FormField from './FormField.vue'
+import ImageUpload from './ImageUpload.vue'
 
 function toSlug(str: string): string {
   return str
@@ -50,14 +64,15 @@ function toSlug(str: string): string {
 }
 
 const isEditing = ref(false)
-const categoryId = ref<number | null>(null)
 const collectionId = ref<number | null>(null)
 const name = ref('')
 const slug = ref('')
 const slugTouched = ref(false)
+const description = ref('')
+const coverUrl = ref('')
 const submitting = ref(false)
 const submitError = ref('')
-const errors = ref({ name: '', slug: '' })
+const errors = ref({ name: '', slug: '', description: '', coverUrl: '' })
 
 let _settingSlug = false
 
@@ -72,32 +87,21 @@ watch(slug, () => {
   _settingSlug = false
 })
 
-const cancelHref = computed(() =>
-  collectionId.value
-    ? `/admin/collections/${collectionId.value}`
-    : '/admin/collections'
-)
-
 onMounted(() => {
-  const el = document.getElementById('category-data')
+  const el = document.getElementById('collection-data')
   isEditing.value = !!el
-  if (el) {
-    const data = JSON.parse(el.textContent || '{}')
-    categoryId.value = data.id ?? null
-    name.value = data.name ?? ''
-    slug.value = data.slug ?? ''
-    collectionId.value = data.collection_id ?? null
-  }
-  const parentEl = document.getElementById('collection-data')
-  if (parentEl) {
-    const parentData = JSON.parse(parentEl.textContent || '{}')
-    collectionId.value = parentData.id ?? null
-  }
+  if (!el) return
+  const data = JSON.parse(el.textContent || '{}')
+  collectionId.value = data.id ?? null
+  name.value = data.name ?? ''
+  slug.value = data.slug ?? ''
+  description.value = data.description ?? ''
+  coverUrl.value = data.cover_url ?? ''
 })
 
 function validate(): boolean {
   let valid = true
-  errors.value = { name: '', slug: '' }
+  errors.value = { name: '', slug: '', description: '', coverUrl: '' }
 
   if (!name.value.trim()) {
     errors.value.name = 'El nombre es obligatorio'
@@ -119,19 +123,18 @@ async function handleSubmit() {
   try {
     const method = isEditing.value ? 'PUT' : 'POST'
     const url = isEditing.value
-      ? `/api/admin/categories/${categoryId.value}`
-      : '/api/admin/categories'
-
-    const body: Record<string, any> = {
-      name: name.value.trim(),
-      slug: slug.value.trim(),
-    }
-    if (collectionId.value) body.collection_id = collectionId.value
+      ? `/api/admin/collections/${collectionId.value}`
+      : '/api/admin/collections'
 
     const res = await fetch(url, {
       method,
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
+      body: JSON.stringify({
+        name: name.value.trim(),
+        slug: slug.value.trim(),
+        description: description.value.trim() || null,
+        cover_url: coverUrl.value.trim() || null,
+      }),
     })
 
     if (!res.ok) {
@@ -139,10 +142,7 @@ async function handleSubmit() {
       throw new Error(data.error || 'Error al guardar')
     }
 
-    const redirectTo = collectionId.value
-      ? `/admin/collections/${collectionId.value}`
-      : '/admin/collections'
-    window.location.href = redirectTo
+    window.location.href = '/admin/collections'
   } catch (err: any) {
     submitError.value = err.message
   } finally {

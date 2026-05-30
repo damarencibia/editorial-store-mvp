@@ -1,0 +1,53 @@
+---
+import AdminLayout from '../../../../../layouts/AdminLayout.astro'
+import CategoryForm from '../../../../../components/admin/CategoryForm.vue'
+import { getServerSupabase } from '../../../../../lib/auth'
+import { getServerProfile } from '../../../../../lib/profiles'
+
+const supabase = getServerSupabase(Astro.request, (name, value, options) => {
+  Astro.cookies.set(name, value, options as any)
+})
+const profile = await getServerProfile(supabase)
+if (!profile || profile.role !== 'admin') return Astro.redirect('/')
+
+const { id, catId } = Astro.params
+const collectionId = Number(id)
+const categoryId = Number(catId)
+
+const { data: collection } = await supabase
+  .from('collections')
+  .select('name')
+  .eq('id', collectionId)
+  .single()
+
+const { data: category } = await supabase
+  .from('categories')
+  .select('*')
+  .eq('id', categoryId)
+  .eq('collection_id', collectionId)
+  .single()
+
+if (!collection || !category) {
+  return Astro.redirect(`/admin/collections/${collectionId}`)
+}
+---
+
+<AdminLayout>
+  <title>Editar categoría — Admin</title>
+
+  <div class="max-w-xl">
+    <div class="flex items-center gap-3 mb-6">
+      <a href={`/admin/collections/${collectionId}`} class="text-text-muted hover:text-text-primary transition-colors">&larr;</a>
+      <h1 class="font-heading text-2xl font-bold tracking-tight">
+        Editar categoría en <span class="text-accent">{collection.name}</span>
+      </h1>
+    </div>
+    <CategoryForm client:load />
+    <script id="category-data" type="application/json" set:html={JSON.stringify({
+      id: category.id,
+      name: category.name,
+      slug: category.slug,
+      collection_id: category.collection_id,
+    })}></script>
+  </div>
+</AdminLayout>
