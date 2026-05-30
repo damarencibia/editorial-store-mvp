@@ -54,15 +54,11 @@
           class="transition-transform duration-200"
           :class="{ 'rotate-45': pinned }"
         >
-          <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/>
+          <circle cx="12" cy="5" r="4"/>
+          <line x1="12" y1="9" x2="12" y2="16"/>
+          <path d="M9 16l3 5 3-5"/>
         </svg>
       </button>
-      <span
-        v-if="isDesktop && isEffectivelyExpanded && !pinned"
-        class="text-[10px] text-text-muted italic whitespace-nowrap"
-      >
-        — Fijar
-      </span>
     </div>
 
     <!-- Navigation -->
