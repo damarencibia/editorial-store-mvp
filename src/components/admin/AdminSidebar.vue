@@ -100,6 +100,20 @@
           <span class="text-[10px] uppercase tracking-wider text-accent font-semibold">Admin</span>
         </div>
       </div>
+      <a
+        href="/"
+        @click="closeMobile"
+        class="flex items-center rounded-lg py-2 text-xs transition-colors"
+        :class="isDesktop && !isEffectivelyExpanded ? 'justify-center px-3 gap-0' : 'px-3 gap-2'"
+      >
+        <span class="flex-shrink-0 flex items-center justify-center w-4 h-4" v-html="icons.store"></span>
+        <span
+          v-show="isEffectivelyExpanded || !isDesktop"
+          class="text-text-muted hover:text-accent transition-colors"
+        >
+          Ir a la tienda
+        </span>
+      </a>
       <form method="POST" action="/api/auth/signout" class="mt-1 pb-4">
         <button
           type="submit"
@@ -149,6 +163,7 @@ const icons: Record<string, string> = {
   folder: '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/></svg>',
   clipboard: '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 14l2 2 4-4"/></svg>',
   users: '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><circle cx="16" cy="7" r="4"/></svg>',
+  store: '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>',
 }
 
 const navItems = [
