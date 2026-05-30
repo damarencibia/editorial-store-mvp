@@ -221,6 +221,37 @@
         </div>
 
         <div
+          v-if="deleteModalVisible"
+          class="fixed inset-0 z-[55] flex items-center justify-center bg-black/60"
+          @click="deleteModalVisible = false"
+        >
+          <div class="max-w-md w-full mx-4 rounded-xl bg-surface-2 border border-border p-6 shadow-2xl" @click.stop>
+            <h3 class="font-heading text-lg font-semibold mb-2">Eliminar libros</h3>
+            <p class="text-sm text-text-muted mb-4">
+              ¿Eliminar {{ selectedIds.size }} {{ selectedIds.size === 1 ? 'libro' : 'libros' }}? Esta acción no se puede deshacer.
+            </p>
+            <label class="flex items-center gap-2 cursor-pointer select-none mb-6">
+              <input type="checkbox" v-model="deleteImagesChecked" class="rounded border-border accent-accent" />
+              <span class="text-xs text-text-muted">Eliminar también las imágenes del almacenamiento</span>
+            </label>
+            <div class="flex items-center justify-end gap-3">
+              <button
+                @click="deleteModalVisible = false"
+                class="cursor-pointer rounded-lg px-4 py-2 text-sm text-text-muted hover:text-text-primary transition-colors"
+              >
+                Cancelar
+              </button>
+              <button
+                @click="executeBulkDelete"
+                class="cursor-pointer rounded-lg bg-red-500 px-4 py-2 text-sm font-medium text-white hover:bg-red-600 transition-colors"
+              >
+                Eliminar
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div
           v-if="openDropdownId !== null"
           class="fixed inset-0 z-20"
           @click="openDropdownId = null"
@@ -270,6 +301,8 @@ const processing = ref(false)
 const resultMessage = ref('')
 const resultType = ref<'success' | 'error'>('success')
 const openDropdownId = ref<number | null>(null)
+const deleteModalVisible = ref(false)
+const deleteImagesChecked = ref(false)
 
 function onKeyDown(e: KeyboardEvent) {
   if (e.key === 'Escape') {
@@ -417,10 +450,14 @@ async function executeRowAction(action: Action, row: Record<string, any>) {
   }
 }
 
+function confirmBulkDelete() {
+  deleteModalVisible.value = true
+}
+
 async function executeBulkAction(action: string) {
   if (action === 'delete') {
-    const confirmed = confirm('¿Estás seguro de eliminar los libros seleccionados? Esta acción no se puede deshacer.')
-    if (!confirmed) return
+    confirmBulkDelete()
+    return
   }
 
   processing.value = true
@@ -436,6 +473,39 @@ async function executeBulkAction(action: string) {
       throw new Error(data.error || 'Error al ejecutar acción')
     }
     resultMessage.value = 'Acción ejecutada correctamente.'
+    resultType.value = 'success'
+    setTimeout(() => {
+      window.location.reload()
+    }, 1000)
+  } catch (err: any) {
+    resultMessage.value = err.message
+    resultType.value = 'error'
+    setTimeout(() => { resultMessage.value = '' }, 4000)
+  } finally {
+    processing.value = false
+  }
+}
+
+async function executeBulkDelete() {
+  deleteModalVisible.value = false
+  processing.value = true
+  resultMessage.value = ''
+  try {
+    const res = await fetch('/api/admin/books/bulk', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action: 'delete',
+        ids: Array.from(selectedIds.value),
+        delete_images: deleteImagesChecked.value,
+      }),
+    })
+    const data = await res.json()
+    if (!res.ok) {
+      throw new Error(data.error || 'Error al eliminar')
+    }
+    selectedIds.value = new Set()
+    resultMessage.value = 'Libros eliminados correctamente.'
     resultType.value = 'success'
     setTimeout(() => {
       window.location.reload()

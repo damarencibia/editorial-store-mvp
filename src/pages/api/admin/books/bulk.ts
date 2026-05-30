@@ -81,9 +81,12 @@ export const POST: APIRoute = async ({ request }) => {
       }
 
       case 'delete': {
+        const body = await request.json()
+        const deleteImages = body.delete_images === true
+
         const { data: books } = await serverSupabase
           .from('books')
-          .select('id, title')
+          .select('id, title, cover_url')
           .in('id', ids)
 
         if (!books || books.length === 0) {
@@ -116,6 +119,29 @@ export const POST: APIRoute = async ({ request }) => {
           return new Response(JSON.stringify({
             error: `No se pueden eliminar libros con órdenes asociadas: ${linkedTitles.join(', ')}`,
           }), { status: 409, headers })
+        }
+
+        if (deleteImages) {
+          for (const book of books) {
+            if (!book.cover_url) continue
+            const fileName = book.cover_url.split('/').pop()
+            if (!fileName) continue
+
+            const { count: bookCount } = await serverSupabase
+              .from('books')
+              .select('id', { count: 'exact', head: true })
+              .eq('cover_url', book.cover_url)
+              .in('id', bookIds.filter(id => id !== book.id))
+
+            const { count: collCount } = await serverSupabase
+              .from('collections')
+              .select('id', { count: 'exact', head: true })
+              .eq('cover_url', book.cover_url)
+
+            if ((bookCount ?? 0) === 0 && (collCount ?? 0) === 0) {
+              await serverSupabase.storage.from('book-covers').remove([fileName])
+            }
+          }
         }
 
         const { error } = await serverSupabase

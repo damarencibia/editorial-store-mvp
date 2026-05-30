@@ -107,8 +107,8 @@ export const POST: APIRoute = async ({ params, request }) => {
       return new Response(JSON.stringify({ error: 'ID inválido' }), { status: 400, headers })
     }
 
-    const formData = await request.formData()
-    const deleteImage = formData.get('delete_image') === 'true'
+    const body = await request.json()
+    const deleteImage = body.delete_image === true
 
     if (deleteImage) {
       const { data: book } = await serverSupabase
