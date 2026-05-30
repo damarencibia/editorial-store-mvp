@@ -47,7 +47,7 @@ const navItems = [
         <a href="/admin" class="font-heading text-lg font-bold text-text-primary hover:text-accent transition-colors">
           Editorial
         </a>
-        <button onclick="closeSidebar()" class="lg:hidden cursor-pointer text-text-muted hover:text-text-primary p-1">
+        <button onclick="closeSidebar()" class="cursor-pointer text-text-muted hover:text-text-primary p-1">
           <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <line x1="18" y1="6" x2="6" y2="18" />
             <line x1="6" y1="6" x2="18" y2="18" />
@@ -111,7 +111,7 @@ const navItems = [
     </div>
   </div>
 
-  <script>
+  <script is:inline>
     function openSidebar() {
       document.getElementById('admin-sidebar').classList.remove('-translate-x-full')
       document.getElementById('sidebar-backdrop').classList.remove('hidden')

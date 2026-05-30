@@ -10,10 +10,14 @@ const supabase = getServerSupabase(Astro.request, (name, value, options) => {
 const profile = await getServerProfile(supabase)
 if (!profile || profile.role !== 'admin') return Astro.redirect('/')
 
-const { data: orders } = await supabase
+const { data: orders, error } = await supabase
   .from('orders')
   .select('*')
   .order('created_at', { ascending: false })
+
+console.log('[orders.astro] error:', error)
+console.log('[orders.astro] count:', orders?.length)
+console.log('[orders.astro] first:', orders?.[0])
 ---
 
 <AdminLayout>
@@ -21,6 +25,6 @@ const { data: orders } = await supabase
 
   <div class="max-w-5xl">
     <h1 class="font-heading text-2xl font-bold tracking-tight mb-6">Órdenes</h1>
-    <OrdersTable client:only="vue" :orders={orders ?? []} />
+    <OrdersTable client:only="vue" orders={JSON.stringify(orders ?? [])} />
   </div>
 </AdminLayout>

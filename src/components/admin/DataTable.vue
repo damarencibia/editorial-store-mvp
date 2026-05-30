@@ -229,7 +229,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 
 interface Column {
   key: string
@@ -253,6 +253,8 @@ interface BulkAction {
 }
 
 const props = withDefaults(defineProps<{
+  columns?: Column[]
+  rows?: Record<string, any>[]
   perPage?: number
   emptyText?: string
 }>(), {
@@ -284,15 +286,24 @@ const selectable = ref(false)
 const bulkActions = ref<BulkAction[]>([])
 const selectedIds = ref<Set<number>>(new Set())
 
+watch(() => props.columns, (val) => {
+  if (val !== undefined) columns.value = val
+}, { immediate: true })
+
+watch(() => props.rows, (val) => {
+  if (val !== undefined) rows.value = val
+}, { immediate: true })
+
 onMounted(() => {
   const el = document.getElementById('books-data')
-  if (!el) return
-  const data = JSON.parse(el.textContent || '{}')
-  columns.value = data.columns ?? []
-  rows.value = data.rows ?? []
-  actions.value = data.actions ?? []
-  selectable.value = data.selectable ?? false
-  bulkActions.value = data.bulkActions ?? []
+  if (el) {
+    const data = JSON.parse(el.textContent || '{}')
+    if (data.columns) columns.value = data.columns
+    if (data.rows) rows.value = data.rows
+    if (data.actions) actions.value = data.actions
+    if (data.selectable !== undefined) selectable.value = data.selectable
+    if (data.bulkActions) bulkActions.value = data.bulkActions
+  }
   loaded.value = true
 })
 
