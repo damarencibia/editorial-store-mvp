@@ -43,18 +43,6 @@
           </a>
 
           <a
-            href="/"
-            @click="close"
-            class="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-text-muted hover:text-text-primary hover:bg-surface-3 transition-colors"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M4 19.5A2.5 2.5 0 016.5 17H20" />
-              <path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z" />
-            </svg>
-            Catálogo
-          </a>
-
-          <a
             href="/colecciones"
             @click="close"
             class="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-text-muted hover:text-text-primary hover:bg-surface-3 transition-colors"
@@ -129,20 +117,20 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, onUnmounted } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import { auth, initAuth } from '../../stores/authStore'
 
 initAuth()
 
 const TOGGLE_EVENT = 'toggle-store-sidebar'
-let open = $ref(false)
+const open = ref(false)
 
 function close() {
-  open = false
+  open.value = false
 }
 
 function onToggle() {
-  open = !open
+  open.value = !open.value
 }
 
 onMounted(() => {
