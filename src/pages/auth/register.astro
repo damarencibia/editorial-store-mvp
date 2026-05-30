@@ -6,17 +6,22 @@ import RegisterForm from '../../components/shared/RegisterForm.vue'
 <StoreLayout>
   <title>Crear cuenta — Editorial</title>
 
-  <div class="flex flex-col items-center justify-center py-12 sm:py-20">
-    <div class="w-full max-w-sm">
-      <h1 class="font-heading text-2xl font-bold tracking-tight mb-1">Crear cuenta</h1>
-      <p class="text-sm text-text-muted mb-8">Regístrate para gestionar tus pedidos y más.</p>
+  <div class="flex items-center justify-center py-12 sm:py-20">
+    <div class="w-full max-w-sm animate-in">
+      <div class="rounded-xl border border-border bg-surface-2 p-8">
+        <div class="flex justify-center mb-6">
+          <img src="/images/logo.png" alt="Editorial" class="h-20 w-20 rounded-full" />
+        </div>
+        <h1 class="text-center font-heading text-2xl font-bold tracking-tight mb-1">Crear cuenta</h1>
+        <p class="text-center text-sm text-text-muted mb-8">Regístrate para gestionar tus pedidos y más.</p>
 
-      <RegisterForm client:only="vue" />
+        <RegisterForm client:only="vue" />
 
-      <p class="mt-6 text-center text-sm text-text-muted">
-        ¿Ya tienes cuenta?
-        <a href="/auth/login" class="text-accent hover:text-accent/80 transition-colors">Inicia sesión</a>
-      </p>
+        <p class="mt-6 text-center text-sm text-text-muted">
+          ¿Ya tienes cuenta?
+          <a href="/auth/login" class="text-accent hover:text-accent/80 transition-colors font-medium">Inicia sesión</a>
+        </p>
+      </div>
     </div>
   </div>
 </StoreLayout>

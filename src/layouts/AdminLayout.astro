@@ -47,7 +47,10 @@ const displayName = user.email?.split('@')[0] ?? 'User'
             <line x1="4" y1="18" x2="20" y2="18" />
           </svg>
         </button>
-        <a href="/admin" class="font-heading text-lg font-bold">Editorial</a>
+        <a href="/admin" class="flex items-center gap-2">
+          <img src="/images/logo.png" alt="Editorial" class="h-8 w-8 rounded-full" />
+          <span class="font-heading text-lg font-bold">Editorial</span>
+        </a>
         <form method="POST" action="/api/auth/signout">
           <button type="submit" class="text-xs text-text-muted hover:text-red-400 transition-colors cursor-pointer">Salir</button>
         </form>

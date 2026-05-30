@@ -3,6 +3,7 @@ import BaseLayout from './BaseLayout.astro'
 import CartIcon from '../components/store/CartIcon.vue'
 import CartDrawer from '../components/store/CartDrawer.vue'
 import AuthStatus from '../components/store/AuthStatus.vue'
+import StoreSidebar from '../components/store/StoreSidebar.vue'
 ---
 
 <BaseLayout>
@@ -10,12 +11,25 @@ import AuthStatus from '../components/store/AuthStatus.vue'
 
   <header class="sticky top-0 z-40 border-b border-border bg-surface-1/80 backdrop-blur-md">
     <div class="mx-auto max-w-7xl flex items-center justify-between px-4 sm:px-6 lg:px-8 py-3">
-      <a href="/" class="font-heading text-xl font-bold tracking-tight text-text-primary hover:text-accent transition-colors">
-        Editorial
-      </a>
-
-      <nav class="hidden sm:flex items-center gap-6">
-      </nav>
+      <div class="flex items-center gap-3">
+        <button
+          id="sidebar-toggle-btn"
+          class="cursor-pointer text-text-muted hover:text-text-primary p-1.5 -ml-1.5 rounded-lg hover:bg-surface-3 transition-colors"
+          aria-label="Abrir menú"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="4" y1="6" x2="20" y2="6" />
+            <line x1="4" y1="12" x2="20" y2="12" />
+            <line x1="4" y1="18" x2="20" y2="18" />
+          </svg>
+        </button>
+        <a href="/" class="flex items-center gap-2.5 shrink-0">
+          <img src="/images/logo.png" alt="Editorial" class="h-9 w-9 rounded-full" />
+          <span class="font-heading text-xl font-bold tracking-tight text-text-primary hidden sm:inline">
+            Editorial
+          </span>
+        </a>
+      </div>
 
       <div class="flex items-center gap-2">
         <AuthStatus client:only="vue" />
@@ -23,6 +37,8 @@ import AuthStatus from '../components/store/AuthStatus.vue'
       </div>
     </div>
   </header>
+
+  <slot name="hero" />
 
   <main class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
     <slot />
@@ -32,12 +48,18 @@ import AuthStatus from '../components/store/AuthStatus.vue'
     <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-12">
       <div class="grid grid-cols-2 md:grid-cols-4 gap-8">
         <div class="col-span-2 md:col-span-1">
-          <a href="/" class="font-heading text-lg font-bold text-text-primary hover:text-accent transition-colors">Editorial</a>
+          <a href="/" class="flex items-center gap-2.5">
+            <img src="/images/logo.png" alt="Editorial" class="h-8 w-8 rounded-full" />
+            <span class="font-heading text-lg font-bold text-text-primary hover:text-accent transition-colors">Editorial</span>
+          </a>
           <p class="mt-2 text-sm text-text-dim">Libros, cultura y tecnología para mentes curiosas.</p>
         </div>
         <div>
           <h4 class="text-xs font-semibold uppercase tracking-wider text-text-muted mb-3">Navegar</h4>
           <ul class="space-y-2">
+            <li><a href="/" class="text-sm text-text-dim hover:text-text-primary transition-colors">Catálogo</a></li>
+            <li><a href="/colecciones" class="text-sm text-text-dim hover:text-text-primary transition-colors">Colecciones</a></li>
+            <li><a href="/best-sellers" class="text-sm text-text-dim hover:text-text-primary transition-colors">Más vendidos</a></li>
           </ul>
         </div>
         <div>
@@ -60,5 +82,12 @@ import AuthStatus from '../components/store/AuthStatus.vue'
     </div>
   </footer>
 
+  <StoreSidebar client:only="vue" />
   <CartDrawer client:only="vue" />
 </BaseLayout>
+
+<script is:inline>
+  document.getElementById('sidebar-toggle-btn')?.addEventListener('click', () => {
+    window.dispatchEvent(new CustomEvent('toggle-store-sidebar'))
+  })
+</script>

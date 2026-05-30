@@ -25,15 +25,20 @@
   >
     <!-- Header -->
     <div
-      class="flex items-center pt-4 pb-0"
-      :class="isDesktop && !isEffectivelyExpanded ? 'justify-center px-3' : 'justify-between px-4'"
+      class="flex items-center justify-between pt-4 pb-0 px-3"
     >
       <a
-        v-show="isEffectivelyExpanded || !isDesktop"
         href="/admin"
-        class="font-heading text-lg font-bold text-text-primary hover:text-accent transition-colors whitespace-nowrap overflow-hidden"
+        class="flex items-center text-text-primary hover:text-accent transition-colors flex-shrink-0"
+        :class="isDesktop && !isEffectivelyExpanded ? '' : 'gap-2.5'"
       >
-        Editorial
+        <img src="/images/logo.png" alt="Editorial"
+          class="rounded-full flex-shrink-0"
+          :class="isDesktop && !isEffectivelyExpanded ? 'h-7 w-7' : 'h-8 w-8'" />
+        <span v-show="isEffectivelyExpanded || !isDesktop"
+              class="font-heading text-lg font-bold whitespace-nowrap">
+          Editorial
+        </span>
       </a>
       <button
         v-if="isDesktop"

@@ -33,8 +33,13 @@ try {
   <meta property="og:description" slot="head" content="Descubre nuestra colección curada de libros que cruzan la frontera entre la cultura clásica y el pensamiento contemporáneo." />
   <meta property="og:type" slot="head" content="website" />
 
-  <section class="relative mb-16 sm:mb-24 overflow-hidden rounded-xl sm:rounded-2xl bg-surface-2 border border-border">
-    <div class="relative z-10 px-6 sm:px-10 lg:px-14 py-16 sm:py-20 lg:py-24">
+  <div slot="hero">
+    <section class="relative mb-16 sm:mb-24 overflow-hidden border-b border-border">
+      <div class="absolute inset-0">
+        <img src="/images/hero-bg.jpg" alt="" class="h-full w-full object-cover" />
+        <div class="absolute inset-0 bg-gradient-to-r from-surface-1 via-surface-1/60 to-surface-1/20" />
+      </div>
+      <div class="relative z-10 px-4 sm:px-6 lg:px-8 py-16 sm:py-20 lg:py-24" style="max-width: 1280px; margin: 0 auto;">
       <div class="max-w-2xl">
         <p class="text-xs font-semibold uppercase tracking-widest text-accent mb-4">
           Editorial Store
@@ -68,8 +73,8 @@ try {
         </div>
       </div>
     </div>
-    <div class="absolute top-0 right-0 w-1/3 h-full bg-gradient-to-l from-accent/5 to-transparent pointer-events-none" />
   </section>
+  </div>
 
   {error && (
     <div class="rounded-lg border border-red-500/20 bg-red-500/5 px-5 py-4 text-sm text-red-400 mb-8">
