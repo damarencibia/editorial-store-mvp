@@ -57,10 +57,13 @@ if (!error && files) {
   images.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
 }
 
+const totalUsedBytes = (files ?? []).reduce((sum, f) => sum + (f.metadata?.size ?? 0), 0)
+
 function formatSize(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
+  if (bytes < 1024 * 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
+  return `${(bytes / (1024 * 1024 * 1024)).toFixed(2)} GB`
 }
 ---
 
@@ -70,7 +73,7 @@ function formatSize(bytes: number): string {
   <div class="max-w-6xl">
     <div class="flex items-center justify-between mb-6">
       <h1 class="font-heading text-2xl font-bold tracking-tight">Imágenes</h1>
-      <span class="text-sm text-text-muted">{images.length} {images.length === 1 ? 'archivo' : 'archivos'}</span>
+      <span class="text-sm text-text-muted">{images.length} {images.length === 1 ? 'archivo' : 'archivos'} &middot; {formatSize(totalUsedBytes)}</span>
     </div>
 
     <div id="filters" class="flex flex-wrap items-center gap-3 mb-6">
@@ -126,11 +129,7 @@ function formatSize(bytes: number): string {
           data-collections={img.collectionCount}
           data-size={img.size}
         >
-          <div class="absolute top-2 left-2 z-10 opacity-0 max-md:opacity-100 group-hover:opacity-100 transition-opacity pointer-events-none selected:opacity-100">
-            <div class="flex items-center justify-center w-6 h-6 rounded-full bg-accent text-white text-xs font-bold shadow-lg backdrop-blur-sm">
-              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-            </div>
-          </div>
+
           <div class="absolute top-2 right-2 z-10 opacity-0 max-md:opacity-100 group-hover:opacity-100 transition-opacity">
             <button
               class="delete-btn cursor-pointer rounded-lg bg-red-500/80 px-2.5 py-1 text-xs text-white hover:bg-red-500 transition-colors shadow-lg backdrop-blur-sm"
@@ -191,6 +190,13 @@ function formatSize(bytes: number): string {
       </div>
     </div>
   </div>
+
+  <div id="loading-overlay" class="hidden fixed inset-0 z-[60] flex items-center justify-center bg-black/60">
+    <div class="flex flex-col items-center gap-3">
+      <div class="h-10 w-10 animate-spin rounded-full border-4 border-accent border-t-transparent"></div>
+      <p class="text-sm font-medium text-white">Eliminando...</p>
+    </div>
+  </div>
 </AdminLayout>
 
 <style>
@@ -209,6 +215,7 @@ const bulkBar = document.getElementById('bulk-bar')!
 const selectAllBtn = document.getElementById('select-all-btn')!
 const selectedCount = document.getElementById('selected-count')!
 const bulkDeleteBtn = document.getElementById('bulk-delete-btn')!
+const loadingOverlay = document.getElementById('loading-overlay')!
 const deleteModal = document.getElementById('delete-modal')!
 const deleteMsg = document.getElementById('delete-msg')!
 const deleteWarning = document.getElementById('delete-warning')!
@@ -391,6 +398,9 @@ deleteModal.addEventListener('click', (e) => {
 confirmDelete?.addEventListener('click', async () => {
   if (pendingNames.length === 0) return
 
+  deleteModal.classList.add('hidden')
+  loadingOverlay.classList.remove('hidden')
+
   try {
     const res = await fetch('/api/admin/storage', {
       method: 'DELETE',
@@ -399,12 +409,14 @@ confirmDelete?.addEventListener('click', async () => {
     })
     if (!res.ok) {
       const data = await res.json()
+      loadingOverlay.classList.add('hidden')
       alert(data.error || 'Error al eliminar')
       closeModal()
       return
     }
     window.location.reload()
   } catch {
+    loadingOverlay.classList.add('hidden')
     alert('Error al eliminar las imágenes')
     closeModal()
   }
