@@ -15,15 +15,43 @@ export interface Category {
   created_at: string
 }
 
+export interface Series {
+  id: number
+  name: string
+  created_at: string
+}
+
+export interface Author {
+  id: number
+  name: string
+  slug: string
+  bio: string | null
+  photo_url: string | null
+  created_at: string
+}
+
 export interface Book {
   id: number
   slug: string
   title: string
-  author: string
+  subtitle: string | null
+  author_id: number | null
   description: string | null
   price: number
   cover_url: string | null
   category_id: number | null
+  publisher: string | null
+  pages: number
+  translator: string | null
+  series_id: number | null
+  age_target: string
+  binding_type: string
+  language: string
+  published_at: string | null
+  is_visible: boolean
+  is_best_seller: boolean
+  manual_best_seller: boolean
+  sales_count: number
   created_at?: string
 }
 

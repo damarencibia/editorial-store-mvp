@@ -1,0 +1,58 @@
+---
+import AdminLayout from '../../../layouts/AdminLayout.astro'
+import DataTable from '../../../components/admin/DataTable.vue'
+import { getServerSupabase } from '../../../lib/auth'
+import { getServerProfile } from '../../../lib/profiles'
+
+const supabase = getServerSupabase(Astro.request, (name, value, options) => {
+  Astro.cookies.set(name, value, options as any)
+})
+const profile = await getServerProfile(supabase)
+if (!profile || profile.role !== 'admin') return Astro.redirect('/')
+
+const { data: authors } = await supabase
+  .from('authors')
+  .select('id, name, slug, photo_url, created_at, books(count)')
+  .order('name')
+
+const mapped = (authors ?? []).map((a: any) => ({
+  id: a.id,
+  photo: a.photo_url,
+  name: a.name,
+  slug: a.slug,
+  books_count: a.books?.[0]?.count ?? 0,
+}))
+
+const columns = [
+  { key: 'photo', label: 'Foto', type: 'image' },
+  { key: 'name', label: 'Nombre' },
+  { key: 'slug', label: 'Slug' },
+  { key: 'books_count', label: 'Libros' },
+]
+
+const actions = [
+  { type: 'link', label: 'Editar', href: '/admin/authors/{id}' },
+]
+---
+
+<AdminLayout>
+  <title>Autores — Admin</title>
+
+  <div class="max-w-3xl">
+    <div class="flex items-center justify-between mb-6">
+      <h1 class="font-heading text-2xl font-bold tracking-tight">Autores</h1>
+      <a
+        href="/admin/authors/new"
+        class="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white hover:bg-accent/90 transition-colors"
+      >
+        + Nuevo autor
+      </a>
+    </div>
+
+    <DataTable
+      client:load
+      emptyText="No hay autores registrados."
+    />
+    <script id="books-data" type="application/json" set:html={JSON.stringify({ columns, rows: mapped, actions })}></script>
+  </div>
+</AdminLayout>

@@ -28,7 +28,7 @@ const displayName = user.email?.split('@')[0] ?? 'User'
 
 <BaseLayout>
   <slot name="head" slot="head" />
-  <title>Admin — Editorial</title>
+  <title>Admin — Arraigo Editorial</title>
 
   <div class="flex min-h-screen">
     <AdminSidebar
@@ -48,8 +48,8 @@ const displayName = user.email?.split('@')[0] ?? 'User'
           </svg>
         </button>
         <a href="/admin" class="flex items-center gap-2">
-          <img src="/images/logo.png" alt="Editorial" class="h-8 w-8 rounded-full" />
-          <span class="font-heading text-lg font-bold">Editorial</span>
+          <img src="/images/logo.png" alt="Arraigo Editorial" class="h-8 w-8 rounded-full" />
+          <span class="font-heading text-lg font-bold">Arraigo Editorial</span>
         </a>
         <form method="POST" action="/api/auth/signout">
           <button type="submit" class="text-xs text-text-muted hover:text-red-400 transition-colors cursor-pointer">Salir</button>

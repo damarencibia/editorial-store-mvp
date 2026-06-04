@@ -1,0 +1,242 @@
+---
+import AdminLayout from '../../../layouts/AdminLayout.astro'
+import AuthorForm from '../../../components/admin/AuthorForm.vue'
+import { getServerSupabase } from '../../../lib/auth'
+import { getServerProfile } from '../../../lib/profiles'
+
+const supabase = getServerSupabase(Astro.request, (name, value, options) => {
+  Astro.cookies.set(name, value, options as any)
+})
+const profile = await getServerProfile(supabase)
+if (!profile || profile.role !== 'admin') return Astro.redirect('/')
+
+const { id } = Astro.params
+const authorId = Number(id)
+const { data: author } = await supabase
+  .from('authors')
+  .select('*')
+  .eq('id', authorId)
+  .single()
+
+if (!author) {
+  return Astro.redirect('/admin/authors')
+}
+
+const { data: authorBooks } = await supabase
+  .from('books')
+  .select('id, title, cover_url')
+  .eq('author_id', authorId)
+  .order('title')
+
+const { data: allBooks } = await supabase
+  .from('books')
+  .select('id, title')
+  .order('title')
+---
+
+<AdminLayout>
+  <title>{author.name} — Admin</title>
+
+  <div class="max-w-4xl">
+    <div class="flex items-center justify-between mb-6">
+      <div class="flex items-center gap-3">
+        <a href="/admin/authors" class="text-text-muted hover:text-text-primary transition-colors">&larr;</a>
+        <h1 class="font-heading text-2xl font-bold tracking-tight">{author.name}</h1>
+      </div>
+      <button
+        type="button"
+        id="delete-btn"
+        class="cursor-pointer rounded-lg border border-red-500/20 px-3 py-1.5 text-xs font-medium text-red-400 hover:bg-red-500/5 transition-colors"
+      >
+        Eliminar autor
+      </button>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+      <div>
+        <AuthorForm client:load />
+        <script id="author-data" type="application/json" set:html={JSON.stringify({
+          name: author.name,
+          slug: author.slug,
+          bio: author.bio ?? '',
+          photoUrl: author.photo_url ?? '',
+        })}></script>
+      </div>
+
+      <div>
+        <h2 class="font-heading text-lg font-semibold mb-4">Libros de {author.name}</h2>
+
+        <div id="books-list" class="space-y-2 mb-6">
+          {(authorBooks ?? []).length === 0 && (
+            <p id="empty-books" class="py-6 text-sm text-text-muted text-center">No hay libros de este autor.</p>
+          )}
+          {(authorBooks ?? []).map(b => (
+            <div class="flex items-center gap-3 rounded-lg border border-border bg-surface-2 px-3 py-2.5" data-book-id={b.id}>
+              <img
+                src={b.cover_url}
+                alt={b.title}
+                class="w-10 h-14 rounded object-cover flex-shrink-0"
+                onerror="this.style.display='none'"
+              />
+              <span class="text-sm text-text-primary flex-1 min-w-0 truncate">{b.title}</span>
+              <button
+                type="button"
+                class="remove-book-btn cursor-pointer rounded-lg border border-red-500/20 px-2.5 py-1 text-xs font-medium text-red-400 hover:bg-red-500/5 transition-colors flex-shrink-0"
+                data-book-id={b.id}
+              >
+                Quitar
+              </button>
+            </div>
+          ))}
+        </div>
+
+        <div class="rounded-lg border border-border bg-surface-2 p-4">
+          <h3 class="text-sm font-medium text-text-primary mb-3">Agregar libro</h3>
+          <div class="flex items-center gap-2">
+            <select
+              id="add-book-select"
+              class="flex-1 rounded-lg border border-border bg-surface-1 px-3 py-2 text-sm text-text-primary outline-none focus:border-accent transition-colors"
+            >
+              <option value="">Seleccionar libro...</option>
+              {(allBooks ?? [])
+                .filter(b => !(authorBooks ?? []).some(ab => ab.id === b.id))
+                .map(b => (
+                  <option value={b.id}>{b.title}</option>
+                ))}
+            </select>
+            <button
+              type="button"
+              id="add-book-btn"
+              class="cursor-pointer rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white hover:bg-accent/90 disabled:opacity-50 transition-colors flex-shrink-0"
+            >
+              Agregar
+            </button>
+          </div>
+          <p id="book-error" class="hidden mt-2 text-xs text-red-400"></p>
+        </div>
+      </div>
+    </div>
+  </div>
+</AdminLayout>
+
+<script>
+const AUTHOR_ID = Number(window.location.pathname.split('/').pop())
+const deleteBtn = document.getElementById('delete-btn')
+const addBookBtn = document.getElementById('add-book-btn')
+const addBookSelect = document.getElementById('add-book-select') as HTMLSelectElement
+const bookError = document.getElementById('book-error')
+const booksList = document.getElementById('books-list')
+const emptyBooks = document.getElementById('empty-books')
+
+deleteBtn?.addEventListener('click', async () => {
+  if (!confirm('¿Eliminar este autor?')) return
+
+  try {
+    const res = await fetch(`/api/admin/authors/${AUTHOR_ID}`, { method: 'DELETE' })
+    if (!res.ok) {
+      const data = await res.json()
+      alert(data.error || 'Error al eliminar')
+      return
+    }
+    window.location.href = '/admin/authors'
+  } catch {
+    alert('Error al eliminar')
+  }
+})
+
+addBookBtn?.addEventListener('click', async () => {
+  const bookId = Number(addBookSelect.value)
+  if (!bookId) return
+  bookError?.classList.add('hidden')
+
+  try {
+    const res = await fetch(`/api/admin/books/${bookId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ author_id: AUTHOR_ID }),
+    })
+    if (!res.ok) {
+      const data = await res.json()
+      if (bookError) {
+        bookError.textContent = data.error || 'Error al asignar'
+        bookError.classList.remove('hidden')
+      }
+      return
+    }
+    const book = await res.json()
+
+    // Remove from select
+    const option = addBookSelect.querySelector(`option[value="${bookId}"]`)
+    if (option) option.remove()
+    addBookSelect.value = ''
+
+    // Hide empty message
+    if (emptyBooks) emptyBooks.remove()
+
+    // Add to books list
+    const div = document.createElement('div')
+    div.className = 'flex items-center gap-3 rounded-lg border border-border bg-surface-2 px-3 py-2.5'
+    div.dataset.bookId = String(bookId)
+    div.innerHTML = `
+      <img src="${book.cover_url || ''}" alt="${book.title}" class="w-10 h-14 rounded object-cover flex-shrink-0" onerror="this.style.display='none'" />
+      <span class="text-sm text-text-primary flex-1 min-w-0 truncate">${book.title}</span>
+      <button type="button" class="remove-book-btn cursor-pointer rounded-lg border border-red-500/20 px-2.5 py-1 text-xs font-medium text-red-400 hover:bg-red-500/5 transition-colors flex-shrink-0" data-book-id="${bookId}">Quitar</button>
+    `
+    booksList?.appendChild(div)
+    div.querySelector('.remove-book-btn')?.addEventListener('click', removeBookHandler)
+  } catch {
+    if (bookError) {
+      bookError.textContent = 'Error de conexión'
+      bookError.classList.remove('hidden')
+    }
+  }
+})
+
+async function removeBookHandler(e: Event) {
+  const btn = e.currentTarget as HTMLButtonElement
+  const bookId = Number(btn.dataset.bookId)
+  if (!bookId) return
+
+  try {
+    const res = await fetch(`/api/admin/books/${bookId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ author_id: null }),
+    })
+    if (!res.ok) {
+      const data = await res.json()
+      alert(data.error || 'Error al quitar')
+      return
+    }
+
+    // Remove from DOM
+    const item = btn.closest('[data-book-id]') as HTMLElement
+    if (item) {
+      const title = item.querySelector('.text-sm.text-text-primary')?.textContent || ''
+      item.remove()
+
+      // Add back to select
+      const opt = document.createElement('option')
+      opt.value = String(bookId)
+      opt.textContent = title
+      addBookSelect?.appendChild(opt)
+
+      // Show empty message if no books left
+      if (booksList && booksList.children.length === 0) {
+        const p = document.createElement('p')
+        p.id = 'empty-books'
+        p.className = 'py-6 text-sm text-text-muted text-center'
+        p.textContent = 'No hay libros de este autor.'
+        booksList.appendChild(p)
+      }
+    }
+  } catch {
+    alert('Error de conexión')
+  }
+}
+
+// Attach remove handlers to existing buttons
+document.querySelectorAll('.remove-book-btn').forEach(btn => {
+  btn.addEventListener('click', removeBookHandler)
+})
+</script>

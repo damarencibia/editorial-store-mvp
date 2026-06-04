@@ -32,12 +32,12 @@
         class="flex items-center text-text-primary hover:text-accent transition-colors flex-shrink-0"
         :class="isDesktop && !isEffectivelyExpanded ? '' : 'gap-2.5'"
       >
-        <img src="/images/logo.png" alt="Editorial"
+        <img src="/images/logo.png" alt="Arraigo Editorial"
           class="rounded-full flex-shrink-0"
           :class="isDesktop && !isEffectivelyExpanded ? 'h-7 w-7' : 'h-8 w-8'" />
         <span v-show="isEffectivelyExpanded || !isDesktop"
               class="font-heading text-lg font-bold whitespace-nowrap">
-          Editorial
+          Arraigo Editorial
         </span>
       </a>
       <button
@@ -176,6 +176,9 @@ const navItems = [
   { href: '/admin', label: 'Dashboard', icon: 'dashboard', match: (p: string) => p === '/admin' },
   { href: '/admin/books', label: 'Libros', icon: 'book', match: (p: string) => p.startsWith('/admin/books') },
   { href: '/admin/collections', label: 'Colecciones', icon: 'folder', match: (p: string) => p.startsWith('/admin/collections') },
+  { href: '/admin/series', label: 'Series', icon: 'folder', match: (p: string) => p.startsWith('/admin/series') },
+  { href: '/admin/authors', label: 'Autores', icon: 'users', match: (p: string) => p.startsWith('/admin/authors') },
+  { href: '/admin/top-books', label: 'Top 10 del mes', icon: 'clipboard', match: (p: string) => p.startsWith('/admin/top-books') },
   { href: '/admin/orders', label: 'Órdenes', icon: 'clipboard', match: (p: string) => p === '/admin/orders' },
   { href: '/admin/customers', label: 'Clientes', icon: 'users', match: (p: string) => p === '/admin/customers' },
   { href: '/admin/storage', label: 'Imágenes', icon: 'image', match: (p: string) => p.startsWith('/admin/storage') },

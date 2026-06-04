@@ -12,6 +12,15 @@
       @input="$emit('update:modelValue', ($event.target as HTMLInputElement).value)"
     />
 
+    <input
+      v-else-if="type === 'date'"
+      :id="id"
+      type="date"
+      :value="modelValue"
+      class="w-full rounded-lg border border-border bg-surface-2 px-4 py-2.5 text-sm text-text-primary transition-colors focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent/30"
+      @input="$emit('update:modelValue', ($event.target as HTMLInputElement).value)"
+    />
+
     <textarea
       v-else-if="type === 'textarea'"
       :id="id"
@@ -48,7 +57,7 @@ interface SelectOption {
 withDefaults(defineProps<{
   id?: string
   label?: string
-  type?: 'text' | 'email' | 'number' | 'url' | 'textarea' | 'select'
+  type?: 'text' | 'email' | 'number' | 'url' | 'textarea' | 'select' | 'date'
   modelValue?: string | number
   placeholder?: string
   error?: string

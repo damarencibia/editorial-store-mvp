@@ -1,0 +1,25 @@
+---
+import AdminLayout from '../../../layouts/AdminLayout.astro'
+import AuthorForm from '../../../components/admin/AuthorForm.vue'
+import { getServerSupabase } from '../../../lib/auth'
+import { getServerProfile } from '../../../lib/profiles'
+
+const supabase = getServerSupabase(Astro.request, (name, value, options) => {
+  Astro.cookies.set(name, value, options as any)
+})
+const profile = await getServerProfile(supabase)
+if (!profile || profile.role !== 'admin') return Astro.redirect('/')
+---
+
+<AdminLayout>
+  <title>Nuevo autor — Admin</title>
+
+  <div class="max-w-xl">
+    <div class="flex items-center gap-3 mb-6">
+      <a href="/admin/authors" class="text-text-muted hover:text-text-primary transition-colors">&larr;</a>
+      <h1 class="font-heading text-2xl font-bold tracking-tight">Nuevo autor</h1>
+    </div>
+
+    <AuthorForm client:load />
+  </div>
+</AdminLayout>

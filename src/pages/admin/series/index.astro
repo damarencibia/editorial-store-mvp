@@ -1,0 +1,54 @@
+---
+import AdminLayout from '../../../layouts/AdminLayout.astro'
+import DataTable from '../../../components/admin/DataTable.vue'
+import { getServerSupabase } from '../../../lib/auth'
+import { getServerProfile } from '../../../lib/profiles'
+
+const supabase = getServerSupabase(Astro.request, (name, value, options) => {
+  Astro.cookies.set(name, value, options as any)
+})
+const profile = await getServerProfile(supabase)
+if (!profile || profile.role !== 'admin') return Astro.redirect('/')
+
+const { data: series } = await supabase
+  .from('series')
+  .select('*, books(count)')
+  .order('name')
+
+const mapped = (series ?? []).map((s: any) => ({
+  id: s.id,
+  name: s.name,
+  books_count: s.books?.[0]?.count ?? 0,
+}))
+
+const columns = [
+  { key: 'name', label: 'Nombre' },
+  { key: 'books_count', label: 'Libros' },
+]
+
+const actions = [
+  { type: 'link', label: 'Editar', href: '/admin/series/{id}' },
+]
+---
+
+<AdminLayout>
+  <title>Series — Admin</title>
+
+  <div class="max-w-3xl">
+    <div class="flex items-center justify-between mb-6">
+      <h1 class="font-heading text-2xl font-bold tracking-tight">Series</h1>
+      <a
+        href="/admin/series/new"
+        class="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white hover:bg-accent/90 transition-colors"
+      >
+        + Nueva serie
+      </a>
+    </div>
+
+    <DataTable
+      client:load
+      emptyText="No hay series registradas."
+    />
+    <script id="books-data" type="application/json" set:html={JSON.stringify({ columns, rows: mapped, actions })}></script>
+  </div>
+</AdminLayout>

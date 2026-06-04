@@ -1,0 +1,315 @@
+---
+import AdminLayout from '../../../layouts/AdminLayout.astro'
+import { getServerSupabase } from '../../../lib/auth'
+import { getServerProfile } from '../../../lib/profiles'
+
+const supabase = getServerSupabase(Astro.request, (name, value, options) => {
+  Astro.cookies.set(name, value, options as any)
+})
+const profile = await getServerProfile(supabase)
+if (!profile || profile.role !== 'admin') return Astro.redirect('/')
+
+const { data: picks } = await supabase
+  .from('monthly_picks')
+  .select('*, books(id, title, cover_url)')
+  .order('position')
+
+const { data: allBooks } = await supabase
+  .from('books')
+  .select('id, title')
+  .order('title')
+---
+
+<AdminLayout>
+  <title>Top 10 del mes — Admin</title>
+
+  <div class="max-w-xl">
+    <div class="flex items-center justify-between mb-6">
+      <div class="flex items-center gap-3">
+        <a href="/admin" class="text-text-muted hover:text-text-primary transition-colors">&larr;</a>
+        <h1 class="font-heading text-2xl font-bold tracking-tight">Top 10 del mes</h1>
+      </div>
+    </div>
+
+    <p class="text-xs text-text-muted mb-4">Arrastra los libros para reordenarlos.</p>
+
+    <div id="picks-list" class="space-y-2 mb-8">
+      {(picks ?? []).length === 0 && (
+        <p id="empty-picks" class="py-10 text-sm text-text-muted text-center">No hay libros en el Top 10. Agrega libros usando el selector de abajo.</p>
+      )}
+      {(picks ?? []).map(p => (
+        <div class="pick-item flex items-center gap-3 rounded-lg border border-border bg-surface-2 px-3 py-2.5 transition-colors" data-pick-id={p.id} draggable="true">
+          <span class="drag-handle w-6 h-6 rounded-full bg-accent/10 text-accent text-xs font-bold flex items-center justify-center flex-shrink-0 cursor-grab active:cursor-grabbing select-none">#{p.position}</span>
+          <img
+            src={p.books?.cover_url}
+            alt={p.books?.title}
+            class="w-10 h-14 rounded object-cover flex-shrink-0 pointer-events-none"
+            onerror="this.style.display='none'"
+          />
+          <span class="text-sm text-text-primary flex-1 min-w-0 truncate">{p.books?.title}</span>
+          <button
+            type="button"
+            class="remove-pick-btn cursor-pointer rounded-lg border border-red-500/20 px-2.5 py-1 text-xs font-medium text-red-400 hover:bg-red-500/5 transition-colors flex-shrink-0"
+            data-pick-id={p.id}
+          >
+            Quitar
+          </button>
+        </div>
+      ))}
+    </div>
+
+    <div id="reorder-indicator" class="hidden text-xs text-text-muted text-center py-1 mb-4">
+      <span class="inline-block w-3 h-3 border-2 border-accent border-t-transparent rounded-full animate-spin align-middle mr-1.5"></span>
+      Reordenando...
+    </div>
+
+    <div class="rounded-lg border border-border bg-surface-2 p-4">
+      <h3 class="text-sm font-medium text-text-primary mb-3">Agregar libro al Top 10</h3>
+      <div class="flex items-center gap-2">
+        <select
+          id="add-book-select"
+          class="flex-1 rounded-lg border border-border bg-surface-1 px-3 py-2 text-sm text-text-primary outline-none focus:border-accent transition-colors"
+        >
+          <option value="">Seleccionar libro...</option>
+          {(allBooks ?? [])
+            .filter(b => !(picks ?? []).some(p => p.book_id === b.id))
+            .map(b => (
+              <option value={b.id}>{b.title}</option>
+            ))}
+        </select>
+        <button
+          type="button"
+          id="add-book-btn"
+          class="cursor-pointer rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white hover:bg-accent/90 disabled:opacity-50 transition-colors flex-shrink-0"
+        >
+          Agregar
+        </button>
+      </div>
+      <p id="pick-error" class="hidden mt-2 text-xs text-red-400"></p>
+    </div>
+  </div>
+</AdminLayout>
+
+<script>
+const picksList = document.getElementById('picks-list')
+const emptyPicks = document.getElementById('empty-picks')
+const addBookBtn = document.getElementById('add-book-btn')
+const addBookSelect = document.getElementById('add-book-select') as HTMLSelectElement
+const pickError = document.getElementById('pick-error')
+
+let adding = false
+let removing = false
+let reordering = false
+
+let draggedItem: HTMLElement | null = null
+
+// --- Drag & Drop ---
+
+picksList?.addEventListener('dragstart', (e) => {
+  const target = (e.target as HTMLElement).closest('.pick-item') as HTMLElement
+  if (!target) return
+  draggedItem = target
+  target.dataset.dragging = 'true'
+  e.dataTransfer?.setData('text/plain', target.dataset.pickId || '')
+  e.dataTransfer!.effectAllowed = 'move'
+  target.classList.add('opacity-40')
+})
+
+picksList?.addEventListener('dragend', (e) => {
+  const target = (e.target as HTMLElement).closest('.pick-item') as HTMLElement
+  if (target) {
+    delete target.dataset.dragging
+    target.classList.remove('opacity-40')
+  }
+  document.querySelectorAll('.pick-item').forEach(el => {
+    el.classList.remove('border-accent', 'border-2')
+  })
+  draggedItem = null
+})
+
+picksList?.addEventListener('dragover', (e) => {
+  e.preventDefault()
+  const target = (e.target as HTMLElement).closest('.pick-item') as HTMLElement
+  if (!target || target === draggedItem) return
+  e.dataTransfer!.dropEffect = 'move'
+
+  const rect = target.getBoundingClientRect()
+  const mid = rect.top + rect.height / 2
+  const after = e.clientY > mid
+
+  document.querySelectorAll('.pick-item').forEach(el => {
+    el.classList.remove('border-accent', 'border-2')
+  })
+  target.classList.add('border-accent', 'border-2')
+})
+
+picksList?.addEventListener('dragleave', (e) => {
+  const target = (e.target as HTMLElement).closest('.pick-item') as HTMLElement
+  if (target) {
+    target.classList.remove('border-accent', 'border-2')
+  }
+})
+
+picksList?.addEventListener('drop', async (e) => {
+  e.preventDefault()
+  if (reordering) return
+  const target = (e.target as HTMLElement).closest('.pick-item') as HTMLElement
+  if (!target || !draggedItem || target === draggedItem) return
+
+  document.querySelectorAll('.pick-item').forEach(el => {
+    el.classList.remove('border-accent', 'border-2')
+  })
+
+  const rect = target.getBoundingClientRect()
+  const mid = rect.top + rect.height / 2
+  const after = e.clientY > mid
+
+  if (after) {
+    target.parentNode?.insertBefore(draggedItem, target.nextSibling)
+  } else {
+    target.parentNode?.insertBefore(draggedItem, target)
+  }
+
+  renumberPositions()
+
+  const pickIds = getPickOrder()
+  const indicator = document.getElementById('reorder-indicator')
+  indicator?.classList.remove('hidden')
+  reordering = true
+  try {
+    const res = await fetch('/api/admin/top-books', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ pick_ids: pickIds }),
+    })
+    if (!res.ok) {
+      const data = await res.json()
+      console.error('Error al reordenar:', data.error)
+    }
+  } catch {
+    console.error('Error de conexión al reordenar')
+  } finally {
+    indicator?.classList.add('hidden')
+    reordering = false
+  }
+})
+
+function renumberPositions() {
+  const items = picksList?.querySelectorAll('.pick-item')
+  items?.forEach((item, index) => {
+    const badge = item.querySelector('.drag-handle')
+    if (badge) badge.textContent = `#${index + 1}`
+  })
+}
+
+function getPickOrder(): number[] {
+  const items = picksList?.querySelectorAll('.pick-item')
+  if (!items) return []
+  return Array.from(items).map(el => Number((el as HTMLElement).dataset.pickId))
+}
+
+// --- Add book ---
+
+addBookBtn?.addEventListener('click', async () => {
+  if (adding) return
+  const bookId = Number(addBookSelect.value)
+  if (!bookId) return
+  pickError?.classList.add('hidden')
+
+  adding = true
+  addBookBtn.disabled = true
+  addBookSelect.disabled = true
+  addBookBtn.textContent = '⏳ Agregando...'
+
+  try {
+    const res = await fetch('/api/admin/top-books', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ book_id: bookId }),
+    })
+    const data = await res.json()
+    if (!res.ok) {
+      if (pickError) {
+        pickError.textContent = data.error || 'Error al agregar'
+        pickError.classList.remove('hidden')
+      }
+      return
+    }
+
+    const option = addBookSelect.querySelector(`option[value="${bookId}"]`)
+    if (option) option.remove()
+    addBookSelect.value = ''
+
+    if (emptyPicks) emptyPicks.remove()
+
+    const div = document.createElement('div')
+    div.className = 'pick-item flex items-center gap-3 rounded-lg border border-border bg-surface-2 px-3 py-2.5 transition-colors'
+    div.draggable = true
+    div.dataset.pickId = String(data.id)
+    div.innerHTML = `
+      <span class="drag-handle w-6 h-6 rounded-full bg-accent/10 text-accent text-xs font-bold flex items-center justify-center flex-shrink-0 cursor-grab active:cursor-grabbing select-none">#${data.position}</span>
+      <img src="${data.books?.cover_url || ''}" alt="${data.books?.title}" class="w-10 h-14 rounded object-cover flex-shrink-0 pointer-events-none" onerror="this.style.display='none'" />
+      <span class="text-sm text-text-primary flex-1 min-w-0 truncate">${data.books?.title}</span>
+      <button type="button" class="remove-pick-btn cursor-pointer rounded-lg border border-red-500/20 px-2.5 py-1 text-xs font-medium text-red-400 hover:bg-red-500/5 transition-colors flex-shrink-0" data-pick-id="${data.id}">Quitar</button>
+    `
+    picksList?.appendChild(div)
+    div.querySelector('.remove-pick-btn')?.addEventListener('click', removePickHandler)
+  } catch {
+    if (pickError) {
+      pickError.textContent = 'Error de conexión'
+      pickError.classList.remove('hidden')
+    }
+  } finally {
+    adding = false
+    addBookBtn.disabled = false
+    addBookSelect.disabled = false
+    addBookBtn.textContent = 'Agregar'
+  }
+})
+
+// --- Remove book ---
+
+async function removePickHandler(e: Event) {
+  if (removing) return
+  const btn = e.currentTarget as HTMLButtonElement
+  const pickId = Number(btn.dataset.pickId)
+  if (!pickId) return
+
+  removing = true
+  btn.disabled = true
+  btn.textContent = '⏳'
+
+  try {
+    const res = await fetch(`/api/admin/top-books/${pickId}`, { method: 'DELETE' })
+    if (!res.ok) {
+      const data = await res.json()
+      alert(data.error || 'Error al quitar')
+      return
+    }
+
+    const item = btn.closest('.pick-item') as HTMLElement
+    if (item) {
+      item.remove()
+      renumberPositions()
+
+      if (picksList && picksList.children.length === 0) {
+        const p = document.createElement('p')
+        p.id = 'empty-picks'
+        p.className = 'py-10 text-sm text-text-muted text-center'
+        p.textContent = 'No hay libros en el Top 10. Agrega libros usando el selector de abajo.'
+        picksList.appendChild(p)
+      }
+    }
+  } catch {
+    alert('Error de conexión')
+  } finally {
+    removing = false
+    btn.disabled = false
+    btn.textContent = 'Quitar'
+  }
+}
+
+document.querySelectorAll('.remove-pick-btn').forEach(btn => {
+  btn.addEventListener('click', removePickHandler)
+})
+</script>

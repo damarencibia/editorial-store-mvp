@@ -40,9 +40,9 @@ export const PUT: APIRoute = async ({ params, request }) => {
 
   try {
     const body = await request.json()
-    const { title, author, slug, description, price, cover_url, category_id, is_visible, manual_best_seller } = body
+    const { title, author_id, slug, subtitle, description, pages, translator, series_id, age_target, binding_type, language, published_at, price, cover_url, category_id, is_visible, manual_best_seller, publisher } = body
 
-    const updates: Record<string, any> = { title, author, slug, description, price, cover_url, category_id, is_visible }
+    const updates: Record<string, any> = { title, author_id, slug, subtitle, description, pages, translator, series_id, age_target, binding_type, language, published_at, price, cover_url, category_id, is_visible, publisher }
 
     if (typeof manual_best_seller === 'boolean') {
       updates.manual_best_seller = manual_best_seller

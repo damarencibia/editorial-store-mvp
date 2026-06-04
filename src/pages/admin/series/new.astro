@@ -1,0 +1,84 @@
+---
+import AdminLayout from '../../../layouts/AdminLayout.astro'
+import { getServerSupabase } from '../../../lib/auth'
+import { getServerProfile } from '../../../lib/profiles'
+
+const supabase = getServerSupabase(Astro.request, (name, value, options) => {
+  Astro.cookies.set(name, value, options as any)
+})
+const profile = await getServerProfile(supabase)
+if (!profile || profile.role !== 'admin') return Astro.redirect('/')
+---
+
+<AdminLayout>
+  <title>Nueva serie — Admin</title>
+
+  <div class="max-w-xl">
+    <div class="flex items-center gap-3 mb-6">
+      <a href="/admin/series" class="text-text-muted hover:text-text-primary transition-colors">&larr;</a>
+      <h1 class="font-heading text-2xl font-bold tracking-tight">Nueva serie</h1>
+    </div>
+
+    <form id="series-form" class="space-y-4">
+      <div>
+        <label for="name" class="block text-xs font-medium text-text-muted mb-1.5">Nombre</label>
+        <input
+          id="name"
+          name="name"
+          required
+          class="w-full rounded-lg border border-border bg-surface-2 px-4 py-2.5 text-sm text-text-primary placeholder-text-dim transition-colors focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent/30"
+          placeholder="Nombre de la serie"
+        />
+        <p id="error" class="hidden mt-2 text-sm text-red-400"></p>
+      </div>
+
+      <div class="flex items-center gap-3 pt-2">
+        <button
+          type="submit"
+          class="cursor-pointer rounded-lg bg-accent px-5 py-2.5 text-sm font-medium text-white hover:bg-accent/90 disabled:opacity-50 transition-colors"
+        >
+          Crear serie
+        </button>
+        <a href="/admin/series" class="text-sm text-text-muted hover:text-text-primary transition-colors">
+          Cancelar
+        </a>
+      </div>
+    </form>
+  </div>
+</AdminLayout>
+
+<script>
+const form = document.getElementById('series-form') as HTMLFormElement
+const nameInput = document.getElementById('name') as HTMLInputElement
+const errorEl = document.getElementById('error') as HTMLElement
+const submitBtn = form.querySelector('button[type="submit"]') as HTMLButtonElement
+
+form.addEventListener('submit', async (e) => {
+  e.preventDefault()
+  errorEl.classList.add('hidden')
+  submitBtn.disabled = true
+  submitBtn.textContent = 'Guardando...'
+
+  try {
+    const res = await fetch('/api/admin/series', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: nameInput.value.trim() }),
+    })
+    if (!res.ok) {
+      const data = await res.json()
+      errorEl.textContent = data.error || 'Error al guardar'
+      errorEl.classList.remove('hidden')
+      return
+    }
+    const data = await res.json()
+    window.location.href = `/admin/series/${data.id}`
+  } catch {
+    errorEl.textContent = 'Error interno'
+    errorEl.classList.remove('hidden')
+  } finally {
+    submitBtn.disabled = false
+    submitBtn.textContent = 'Crear serie'
+  }
+})
+</script>

@@ -1,11 +1,13 @@
 ---
 import StoreLayout from '../layouts/StoreLayout.astro'
 import BookCard from '../components/store/BookCard.vue'
+import TopPicksCarousel from '../components/store/TopPicksCarousel.vue'
 import { supabase } from '../lib/supabase'
 
 let error: string | null = null
 let collections: any[] = []
 let bestSellers: any[] = []
+let topPicks: any[] = []
 try {
   const { data: colData, error: colErr } = await supabase
     .from('collections')
@@ -22,40 +24,45 @@ try {
     .order('sales_count', { ascending: false })
     .limit(9)
   bestSellers = bestData ?? []
+
+  const { data: picksData } = await supabase
+    .from('monthly_picks')
+    .select('position, books(*)')
+    .order('position')
+  topPicks = (picksData ?? []).map(p => p.books).filter(Boolean)
 } catch (e) {
   error = e instanceof Error ? e.message : 'Error al cargar el contenido'
 }
 ---
 
 <StoreLayout>
-  <title>Editorial — Libros, cultura y tecnología</title>
-  <meta property="og:title" slot="head" content="Editorial — Libros, cultura y tecnología" />
+  <title>Arraigo Editorial — Palabras que echan raíces</title>
+  <meta property="og:title" slot="head" content="Arraigo Editorial — Palabras que echan raíces" />
   <meta property="og:description" slot="head" content="Descubre nuestra colección curada de libros que cruzan la frontera entre la cultura clásica y el pensamiento contemporáneo." />
   <meta property="og:type" slot="head" content="website" />
 
   <div slot="hero">
-    <section class="relative mb-16 sm:mb-24 overflow-hidden border-b border-border min-h-[100dvh] sm:min-h-0 flex flex-col sm:block">
+    <section class="relative mb-16 sm:mb-24 overflow-hidden border-b border-border h-[100dvh] sm:h-auto flex flex-col sm:block">
       <div class="absolute inset-0">
         <img src="/images/hero-bg.jpg" alt="" class="h-full w-full object-cover" />
         <div class="absolute inset-0 bg-gradient-to-r from-surface-1 via-surface-1/60 to-surface-1/20" />
       </div>
-      <div class="relative z-10 px-4 sm:px-6 lg:px-8 pt-8 sm:py-20 lg:py-24 flex-1 flex flex-col sm:block" style="max-width: 1280px; margin: 0 auto;">
+      <div class="relative z-10 px-4 sm:px-6 lg:px-8 pt-16 sm:py-20 lg:py-24 flex-1 flex flex-col sm:block" style="max-width: 1280px; margin: 0 auto;">
       <div class="max-w-2xl flex flex-col h-full sm:block">
-        <div class="flex-1 flex flex-col justify-center sm:block">
+        <div class="sm:block">
           <p class="text-xs font-semibold uppercase tracking-widest text-accent mb-4">
-            Editorial Store
+            Arraigo Editorial
           </p>
-          <h1 class="font-heading text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight leading-tight">
-            Libros que
-            <span class="text-accent">inspiran</span>
-            <br />mentes curiosas
+          <h1 class="font-heading text-5xl lg:text-6xl font-bold tracking-tight leading-tight">
+            Palabras que
+            <span class="text-accent">echan raíces</span>
           </h1>
-          <p class="mt-5 text-base sm:text-lg text-text-muted leading-relaxed max-w-lg">
-            Descubre nuestra colección curada de títulos que cruzan la frontera entre la cultura
-            clásica y el pensamiento contemporáneo.
+          <p class="mt-5 text-lg text-text-muted leading-relaxed max-w-lg">
+            Historias que transforman, conocimiento que perdura. Donde cada página es una semilla.
           </p>
         </div>
-        <div class="mt-auto sm:mt-8 flex flex-wrap gap-3">
+        <div class="flex-1 sm:hidden"></div>
+        <div class="sm:mt-8 pb-8 sm:pb-0 mb-16 sm:mb-0 flex flex-wrap gap-3">
           <a
             href="#colecciones"
             class="inline-flex items-center gap-2 rounded-lg bg-accent px-6 py-3 text-sm font-medium text-white hover:bg-accent/90 transition-all duration-200"
@@ -82,6 +89,16 @@ try {
     <div class="rounded-lg border border-red-500/20 bg-red-500/5 px-5 py-4 text-sm text-red-400 mb-8">
       {error}
     </div>
+  )}
+
+  {topPicks.length > 0 && (
+    <section class="mb-16">
+      <div class="mb-6">
+        <h2 class="font-heading text-2xl font-semibold">Top 10 del mes</h2>
+        <p class="mt-1 text-text-muted">Nuestra selección imperdible de este mes.</p>
+      </div>
+      <TopPicksCarousel books={topPicks} client:only="vue" />
+    </section>
   )}
 
   {bestSellers.length > 0 && (

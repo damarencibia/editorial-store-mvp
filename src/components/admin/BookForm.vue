@@ -8,12 +8,15 @@
         placeholder="Cien años de soledad"
         :error="errors.title"
       />
-      <FormField
+      <AuthorCombobox
         id="author"
-        label="Autor"
-        v-model="form.author"
-        placeholder="Gabriel García Márquez"
-        :error="errors.author"
+        v-model="form.authorId"
+      />
+      <FormField
+        id="publisher"
+        label="Editorial"
+        v-model="form.publisher"
+        placeholder="Penguin Random House"
       />
     </div>
 
@@ -26,6 +29,14 @@
     />
 
     <FormField
+      id="subtitle"
+      label="Subtítulo / Resumen"
+      type="textarea"
+      v-model="form.subtitle"
+      placeholder="Cuando se ama de verdad, el tiempo no existe"
+    />
+
+    <FormField
       id="description"
       label="Descripción"
       type="textarea"
@@ -33,6 +44,66 @@
       placeholder="Descripción del libro..."
       :error="errors.description"
     />
+
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <FormField
+        id="pages"
+        label="Páginas"
+        type="number"
+        v-model="form.pages"
+        placeholder="350"
+      />
+      <FormField
+        id="translator"
+        label="Traductor"
+        v-model="form.translator"
+        placeholder="Nombre del traductor"
+      />
+      <SeriesCombobox
+        id="series"
+        v-model="form.seriesId"
+      />
+      <div>
+        <label for="age-target" class="block text-xs font-medium text-text-muted mb-1.5">Público objetivo</label>
+        <select
+          id="age-target"
+          v-model="form.ageTarget"
+          class="w-full rounded-lg border border-border bg-surface-2 px-3.5 py-2.5 text-sm text-text-primary outline-none focus:border-accent transition-colors"
+        >
+          <option value="Todos">Todos</option>
+          <option value="Infantil">Infantil</option>
+          <option value="Juvenil">Juvenil</option>
+          <option value="Adulto">Adulto</option>
+        </select>
+      </div>
+      <FormField
+        id="binding-type"
+        label="Tipo de encuadernación"
+        v-model="form.bindingType"
+        placeholder="Tapa blanda"
+      />
+      <div>
+        <label for="language" class="block text-xs font-medium text-text-muted mb-1.5">Idioma</label>
+        <select
+          id="language"
+          v-model="form.language"
+          class="w-full rounded-lg border border-border bg-surface-2 px-3.5 py-2.5 text-sm text-text-primary outline-none focus:border-accent transition-colors"
+        >
+          <option value="ES">ES</option>
+          <option value="EN">EN</option>
+          <option value="FR">FR</option>
+          <option value="PT">PT</option>
+          <option value="DE">DE</option>
+          <option value="IT">IT</option>
+        </select>
+      </div>
+      <FormField
+        id="published-at"
+        label="Fecha de publicación"
+        type="date"
+        v-model="form.publishedAt"
+      />
+    </div>
 
     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
       <FormField
@@ -117,6 +188,8 @@
 import { reactive, ref, computed, watch, onMounted } from 'vue'
 import FormField from './FormField.vue'
 import ImageUpload from './ImageUpload.vue'
+import SeriesCombobox from './SeriesCombobox.vue'
+import AuthorCombobox from './AuthorCombobox.vue'
 
 function toSlug(str: string): string {
   return str
@@ -130,9 +203,18 @@ function toSlug(str: string): string {
 
 interface BookFormData {
   title: string
-  author: string
+  authorId: number | null
+  publisher: string
   slug: string
+  subtitle: string
   description: string
+  pages: string
+  translator: string
+  seriesId: number | null
+  ageTarget: string
+  bindingType: string
+  language: string
+  publishedAt: string
   price: string
   coverUrl: string
   isVisible: boolean
@@ -155,9 +237,18 @@ const filteredCategories = computed(() =>
 
 const form = reactive<BookFormData>({
   title: '',
-  author: '',
+  authorId: null,
+  publisher: '',
   slug: '',
+  subtitle: '',
   description: '',
+  pages: '0',
+  translator: '',
+  seriesId: null,
+  ageTarget: 'Todos',
+  bindingType: '',
+  language: 'ES',
+  publishedAt: '',
   price: '',
   coverUrl: '',
   isVisible: true,
@@ -184,13 +275,22 @@ onMounted(() => {
   if (el) {
     const data = JSON.parse(el.textContent || '{}')
     form.title = data.title ?? ''
-    form.author = data.author ?? ''
+    form.authorId = data.authorId ?? null
+    form.publisher = data.publisher ?? ''
     form.slug = data.slug ?? ''
+    form.subtitle = data.subtitle ?? ''
     form.description = data.description ?? ''
+    form.pages = data.pages ?? '0'
+    form.translator = data.translator ?? ''
+    form.seriesId = data.seriesId ?? null
+    form.ageTarget = data.ageTarget ?? 'Todos'
+    form.bindingType = data.bindingType ?? ''
+    form.language = data.language ?? 'ES'
+    form.publishedAt = data.publishedAt ?? ''
     form.price = data.price ?? ''
     form.coverUrl = data.coverUrl ?? ''
     form.isVisible = data.isVisible ?? true
-    form.manualBestSeller = data.manualBestSeller ?? false
+    form.manualBestSeller = data.isBestSeller ?? false
     categoryId.value = data.category_id ?? null
   }
 
@@ -215,7 +315,6 @@ onMounted(() => {
 
 const errors = reactive({
   title: '',
-  author: '',
   slug: '',
   description: '',
   price: '',
@@ -229,10 +328,9 @@ const successMessage = ref('')
 function validate(): boolean {
   let valid = true
   errors.title = form.title.trim() ? '' : 'El título es obligatorio'
-  errors.author = form.author.trim() ? '' : 'El autor es obligatorio'
   errors.slug = form.slug.trim() ? '' : 'El slug es obligatorio'
   errors.price = form.price && parseInt(form.price) > 0 ? '' : 'El precio debe ser mayor a 0'
-  if (errors.title || errors.author || errors.slug || errors.price) valid = false
+  valid = !(errors.title || errors.slug || errors.price)
   return valid
 }
 
@@ -250,9 +348,18 @@ async function handleSubmit() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         title: form.title.trim(),
-        author: form.author.trim(),
+        author_id: form.authorId,
+        publisher: form.publisher.trim() || null,
         slug: form.slug.trim(),
+        subtitle: form.subtitle.trim() || null,
         description: form.description.trim() || null,
+        pages: parseInt(form.pages) || 0,
+        translator: form.translator.trim() || null,
+        series_id: form.seriesId,
+        age_target: form.ageTarget,
+        binding_type: form.bindingType.trim() || null,
+        language: form.language,
+        published_at: form.publishedAt || null,
         price: parseInt(form.price),
         cover_url: form.coverUrl.trim() || null,
         category_id: categoryId.value,

@@ -2,13 +2,6 @@
   <div v-if="!auth.loading" class="flex items-center gap-2">
     <template v-if="auth.user">
       <a
-        v-if="auth.profile?.role === 'admin'"
-        href="/admin"
-        class="text-[10px] text-accent hover:text-accent/80 transition-colors font-semibold uppercase tracking-wider"
-      >
-        Admin
-      </a>
-      <a
         href="/profile"
         class="flex h-8 w-8 items-center justify-center rounded-full bg-accent/10 text-accent text-sm font-bold uppercase ring-2 ring-border hover:ring-accent/30 transition-all"
       >
