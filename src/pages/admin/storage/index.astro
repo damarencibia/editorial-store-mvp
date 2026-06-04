@@ -23,6 +23,7 @@ type ImageInfo = {
   url: string
   bookCount: number
   collectionCount: number
+  authorCount: number
 }
 
 const images: ImageInfo[] = []
@@ -42,6 +43,11 @@ if (!error && files) {
       .select('id', { count: 'exact', head: true })
       .eq('cover_url', url)
 
+    const { count: authorCount } = await supabase
+      .from('authors')
+      .select('id', { count: 'exact', head: true })
+      .eq('photo_url', url)
+
     images.push({
       name: fileName,
       id: f.id,
@@ -51,6 +57,7 @@ if (!error && files) {
       url,
       bookCount: bookCount ?? 0,
       collectionCount: collectionCount ?? 0,
+      authorCount: authorCount ?? 0,
     })
   }
 
@@ -127,6 +134,7 @@ function formatSize(bytes: number): string {
           data-name={img.name}
           data-books={img.bookCount}
           data-collections={img.collectionCount}
+          data-authors={img.authorCount}
           data-size={img.size}
         >
 
@@ -163,7 +171,12 @@ function formatSize(bytes: number): string {
                   {img.collectionCount} {img.collectionCount === 1 ? 'colección' : 'colecciones'}
                 </span>
               )}
-              {img.bookCount === 0 && img.collectionCount === 0 && (
+              {img.authorCount > 0 && (
+                <span class="inline-block rounded-full bg-accent/10 px-2 py-0.5 text-[10px] text-accent font-medium">
+                  {img.authorCount} {img.authorCount === 1 ? 'autor' : 'autores'}
+                </span>
+              )}
+              {img.bookCount === 0 && img.collectionCount === 0 && img.authorCount === 0 && (
                 <span class="inline-block rounded-full bg-yellow-500/10 px-2 py-0.5 text-[10px] text-yellow-500 font-medium">
                   Sin uso
                 </span>
@@ -269,7 +282,8 @@ function applyFilters() {
     const name = card.dataset.name ?? ''
     const books = parseInt(card.dataset.books || '0')
     const collections = parseInt(card.dataset.collections || '0')
-    const inUse = books > 0 || collections > 0
+    const authors = parseInt(card.dataset.authors || '0')
+    const inUse = books > 0 || collections > 0 || authors > 0
 
     const matchesSearch = name.toLowerCase().includes(query)
     const matchesUsage = usage === 'all' || (usage === 'in-use' && inUse) || (usage === 'unused' && !inUse)

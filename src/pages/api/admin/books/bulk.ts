@@ -137,7 +137,12 @@ export const POST: APIRoute = async ({ request }) => {
               .select('id', { count: 'exact', head: true })
               .eq('cover_url', book.cover_url)
 
-            if ((bookCount ?? 0) === 0 && (collCount ?? 0) === 0) {
+            const { count: authCount } = await serverSupabase
+              .from('authors')
+              .select('id', { count: 'exact', head: true })
+              .eq('photo_url', book.cover_url)
+
+            if ((bookCount ?? 0) === 0 && (collCount ?? 0) === 0 && (authCount ?? 0) === 0) {
               await serverSupabase.storage.from('book-covers').remove([fileName])
             }
           }
