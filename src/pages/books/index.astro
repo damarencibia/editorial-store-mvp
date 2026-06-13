@@ -1,0 +1,87 @@
+---
+import StoreLayout from '../../layouts/StoreLayout.astro'
+import BookPage from '../../components/store/BookPage.vue'
+import { supabase } from '../../lib/supabase'
+
+let pageData: Record<string, any> = {
+  books: [],
+  total: 0,
+  authors: [],
+  publishers: [],
+}
+
+try {
+  const { data: books, count: total } = await supabase
+    .from('books')
+    .select('*, authors!left(name)', { count: 'exact', head: false })
+    .eq('is_visible', true)
+    .order('id')
+    .range(0, 23)
+
+  const [authorsRes, authorCountsRes, publishersRes] = await Promise.all([
+    supabase.from('authors').select('id, name').order('name'),
+    supabase.from('books').select('author_id').eq('is_visible', true).not('author_id', 'is', null),
+    supabase.from('books').select('publisher').eq('is_visible', true).not('publisher', 'is', null).neq('publisher', ''),
+  ])
+
+  const authorCountMap = new Map<number, number>()
+  for (const b of authorCountsRes.data ?? []) {
+    if (b.author_id != null) {
+      authorCountMap.set(b.author_id, (authorCountMap.get(b.author_id) ?? 0) + 1)
+    }
+  }
+
+  const publisherMap = new Map<string, number>()
+  for (const b of publishersRes.data ?? []) {
+    if (b.publisher) {
+      publisherMap.set(b.publisher, (publisherMap.get(b.publisher) ?? 0) + 1)
+    }
+  }
+
+  pageData = {
+    books: (books ?? []).map((b: any) => ({
+      id: b.id,
+      slug: b.slug,
+      title: b.title,
+      author: b.authors?.name ?? 'Autor desconocido',
+      author_id: b.author_id,
+      price: b.price,
+      cover_url: b.cover_url,
+      publisher: b.publisher,
+      is_best_seller: b.is_best_seller,
+      sales_count: b.sales_count,
+    })),
+    total: total ?? 0,
+    authors: (authorsRes.data ?? []).map((a: any) => ({
+      id: a.id,
+      name: a.name,
+      count: authorCountMap.get(a.id) ?? 0,
+    })),
+    publishers: Array.from(publisherMap.entries()).map(([name, count]) => ({
+      name,
+      count,
+    })),
+  }
+} catch (e) {
+  console.error('Error loading books page data:', e)
+}
+---
+
+<StoreLayout>
+  <title>Libros — Arraigo Editorial</title>
+  <meta property="og:title" slot="head" content="Libros — Arraigo Editorial" />
+  <meta property="og:description" slot="head" content="Explora todos nuestros libros disponibles." />
+  <meta property="og:type" slot="head" content="website" />
+
+  <div slot="hero">
+    <section class="flex items-center justify-center border-b border-border bg-surface-2 py-32 sm:py-40">
+      <h1 class="font-heading text-6xl sm:text-7xl lg:text-8xl font-bold tracking-tight text-text-primary">
+        Libros
+      </h1>
+    </section>
+  </div>
+
+  <script id="books-data" type="application/json" set:html={JSON.stringify(pageData)}></script>
+
+  <BookPage client:only="vue" />
+</StoreLayout>

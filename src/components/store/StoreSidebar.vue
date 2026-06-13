@@ -54,6 +54,18 @@
           </a>
 
           <a
+            href="/books"
+            @click="close"
+            class="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-text-muted hover:text-text-primary hover:bg-surface-3 transition-colors"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M4 6h16M4 12h16M4 18h16" />
+              <path d="M4 6l4 4-4 4" />
+            </svg>
+            Libros
+          </a>
+
+          <a
             href="/best-sellers"
             @click="close"
             class="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-text-muted hover:text-text-primary hover:bg-surface-3 transition-colors"

@@ -1,35 +1,32 @@
 <template>
   <div class="group flex flex-col rounded-lg border border-border bg-surface-2 transition-all duration-200 hover:border-border-hover overflow-hidden">
-    <a :href="`/book/${book.slug}`" class="flex aspect-[2/3] items-center justify-center bg-surface-1 overflow-hidden">
+    <a :href="`/book/${book.slug}`" class="flex aspect-[4/5] items-center justify-center bg-surface-1 overflow-hidden">
       <img
+        v-if="book.cover_url"
         :src="book.cover_url"
         :alt="book.title"
         class="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
         loading="lazy"
       />
+      <div
+        v-else
+        class="flex h-full w-full items-center justify-center bg-surface-3"
+      >
+        <span class="font-heading text-xl font-bold text-text-dim select-none">{{ book.title.charAt(0).toUpperCase() }}</span>
+      </div>
     </a>
-    <div class="flex flex-1 flex-col gap-2 p-4">
+    <div class="flex flex-1 flex-col gap-1 p-2">
       <a :href="`/book/${book.slug}`" class="hover:text-accent transition-colors">
         <h3 class="font-heading font-semibold text-sm leading-tight line-clamp-2">{{ book.title }}</h3>
       </a>
       <p class="text-xs text-text-muted">{{ book.author }}</p>
-      <div class="mt-auto flex items-center justify-between pt-2">
-        <span class="text-lg font-bold text-accent">${{ formatPrice(book.price) }}</span>
-        <button
-          @click="addToCart"
-          class="cursor-pointer rounded-lg bg-accent px-3 py-1.5 text-xs font-medium text-white hover:bg-accent/90 transition-colors"
-        >
-          + Add
-        </button>
-      </div>
+      <span class="mt-auto text-xs font-bold text-accent">${{ formatPrice(book.price) }}</span>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { cartStore } from '../../lib/cartStore'
-
-const props = defineProps<{
+defineProps<{
   book: {
     id: number
     slug: string
@@ -42,16 +39,5 @@ const props = defineProps<{
 
 function formatPrice(cents: number): string {
   return (cents / 100).toFixed(2)
-}
-
-function addToCart() {
-  cartStore.addItem({
-    bookId: props.book.id,
-    slug: props.book.slug,
-    title: props.book.title,
-    author: props.book.author,
-    price: props.book.price,
-    coverUrl: props.book.cover_url,
-  })
 }
 </script>
