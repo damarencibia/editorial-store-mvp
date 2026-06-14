@@ -4,6 +4,7 @@ import CartIcon from '../components/store/CartIcon.vue'
 import CartDrawer from '../components/store/CartDrawer.vue'
 import AuthStatus from '../components/store/AuthStatus.vue'
 import StoreSidebar from '../components/store/StoreSidebar.vue'
+import GlobalSearch from '../components/store/GlobalSearch.vue'
 ---
 
 <BaseLayout>
@@ -29,6 +30,13 @@ import StoreSidebar from '../components/store/StoreSidebar.vue'
             Arraigo Editorial
           </span>
         </a>
+      </div>
+
+      <div class="hidden sm:block flex-1 max-w-md mx-auto sm:mx-4 lg:mx-8">
+        <GlobalSearch client:only="vue" />
+      </div>
+      <div class="sm:hidden">
+        <GlobalSearch client:only="vue" />
       </div>
 
       <div class="flex items-center gap-2">
