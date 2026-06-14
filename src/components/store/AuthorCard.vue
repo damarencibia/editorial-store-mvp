@@ -3,7 +3,7 @@
     :href="`/autor/${author.slug}`"
     class="group flex flex-col rounded-lg border border-border bg-surface-2 transition-all duration-200 hover:border-border-hover overflow-hidden"
   >
-    <div class="flex aspect-[3/4] items-center justify-center bg-surface-1 overflow-hidden">
+    <div class="flex aspect-[1/1] sm:aspect-[3/4] items-center justify-center bg-surface-1 overflow-hidden">
       <img
         v-if="author.photo_url"
         :src="author.photo_url"

@@ -87,7 +87,7 @@
             <p class="text-text-muted">No se encontraron autores.</p>
           </div>
 
-          <div v-else class="grid grid-cols-[repeat(auto-fill,minmax(160px,1fr))] gap-4 sm:gap-6">
+          <div v-else class="grid grid-cols-[repeat(auto-fill,minmax(140px,1fr))] gap-3 sm:gap-6">
             <AuthorCard v-for="author in filteredAuthors" :key="author.id" :author="author" />
           </div>
         </div>

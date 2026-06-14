@@ -1,9 +1,9 @@
 <template>
   <a
     :href="`/book/${book.slug}`"
-    class="flex items-start gap-6 rounded-lg border border-border bg-surface-2 p-5 transition-all duration-200 hover:border-border-hover hover:bg-surface-2/80"
+    class="flex items-start gap-3 sm:gap-6 rounded-lg border border-border bg-surface-2 p-3 sm:p-5 transition-all duration-200 hover:border-border-hover hover:bg-surface-2/80"
   >
-    <div class="relative flex h-24 w-16 shrink-0 items-center justify-center overflow-hidden rounded bg-surface-1">
+    <div class="relative flex h-20 w-14 sm:h-24 sm:w-16 shrink-0 items-center justify-center overflow-hidden rounded bg-surface-1">
       <span v-if="book.is_trending"
         class="absolute top-0.5 left-0.5 z-10 rounded-full bg-orange-500 px-1.5 py-0.5 text-[9px] font-bold text-white shadow-sm leading-none"
       >
