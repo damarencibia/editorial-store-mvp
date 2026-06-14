@@ -122,15 +122,15 @@ const formattedPrice = `$${(book.price / 100).toFixed(2)}`
 
       {book.authors && (
         <div class="flex items-start gap-3 pb-2 animate-in">
-          <a href={`/autor/${book.authors.slug}`}>
+          <a href={`/autor/${book.authors.slug}`} class="w-11 h-11 rounded-full overflow-hidden flex-shrink-0 mt-0.5">
             {book.authors.photo_url ? (
               <img
                 src={book.authors.photo_url}
                 alt={book.authors.name}
-                class="w-11 h-11 rounded-full object-cover flex-shrink-0 mt-0.5"
+                class="h-full w-full object-cover"
               />
             ) : (
-              <span class="w-11 h-11 rounded-full bg-surface-3 flex items-center justify-center text-sm text-text-muted flex-shrink-0 mt-0.5">
+              <span class="h-full w-full bg-surface-3 flex items-center justify-center text-sm text-text-muted">
                 {book.authors.name.charAt(0).toUpperCase()}
               </span>
             )}
