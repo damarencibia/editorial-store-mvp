@@ -142,7 +142,7 @@
           <p class="text-sm text-text-muted">
             {{ total.toLocaleString('es') }} {{ total === 1 ? 'producto' : 'productos' }}
           </p>
-          <div class="flex items-center gap-1">
+          <div class="hidden md:flex items-center gap-1">
             <button
               @click="changeView('cards')"
               :class="['cursor-pointer rounded-lg p-2 transition-colors', viewMode === 'cards' ? 'bg-accent/10 text-accent' : 'text-text-muted hover:text-text-primary hover:bg-surface-2']"
