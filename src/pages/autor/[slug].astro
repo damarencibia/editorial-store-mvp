@@ -1,0 +1,119 @@
+---
+import StoreLayout from '../../layouts/StoreLayout.astro'
+import { supabase } from '../../lib/supabase'
+
+const { slug } = Astro.params
+
+const { data: author } = await supabase
+  .from('authors')
+  .select('*')
+  .eq('slug', slug)
+  .single()
+
+if (!author) {
+  return Astro.redirect('/404')
+}
+
+const { data: books } = await supabase
+  .from('books')
+  .select('*, categories(name, slug)')
+  .eq('author_id', author.id)
+  .eq('is_visible', true)
+  .order('title')
+
+const bookCount = books?.length ?? 0
+---
+
+<StoreLayout>
+  <title>{author.name} — Arraigo Editorial</title>
+  <meta property="og:title" slot="head" content={`${author.name} — Arraigo Editorial`} />
+  {author.photo_url && <meta property="og:image" slot="head" content={author.photo_url} />}
+  {author.bio && <meta property="og:description" slot="head" content={author.bio} />}
+
+  <div class="max-w-5xl mx-auto">
+    <div class="grid md:grid-cols-[280px_1fr] gap-8 lg:gap-12 mb-16">
+      <!-- Photo -->
+      <div class="flex flex-col gap-4">
+        <div class="aspect-[3/4] overflow-hidden rounded-lg bg-surface-2 border border-border">
+          {author.photo_url ? (
+            <img src={author.photo_url} alt={author.name} class="h-full w-full object-cover" />
+          ) : (
+            <div class="flex h-full w-full items-center justify-center bg-surface-3">
+              <span class="font-heading text-5xl font-bold text-text-dim select-none">
+                {author.name.charAt(0).toUpperCase()}
+              </span>
+            </div>
+          )}
+        </div>
+        <p class="text-sm text-text-muted text-center">{bookCount} {bookCount === 1 ? 'título' : 'títulos'}</p>
+      </div>
+
+      <!-- Bio -->
+      <div>
+        <h1 class="font-heading text-3xl sm:text-4xl font-bold tracking-tight mb-4">{author.name}</h1>
+        {author.bio && (
+          <details class="group">
+            <summary class="text-text-muted leading-relaxed cursor-pointer marker:hidden list-none [&::-webkit-details-marker]:hidden">
+              <span class="line-clamp-4 group-open:line-clamp-none">{author.bio}</span>
+              <span class="text-accent hover:text-accent/80 text-sm font-medium mt-1 inline-block transition-colors">
+                {author.bio.length > 300 ? 'Leer más' : ''}
+              </span>
+            </summary>
+          </details>
+        )}
+      </div>
+    </div>
+
+    {books && books.length > 0 && (
+      <section>
+        <h2 class="font-heading text-2xl font-semibold mb-6 border-b border-border pb-4">
+          Libros de {author.name}
+        </h2>
+
+        <div class="space-y-6">
+          {books.map((book: any) => {
+            const desc = book.description
+              ? book.description.length > 150
+                ? book.description.slice(0, 150) + '...'
+                : book.description
+              : null
+            return (
+              <div class="flex gap-4 sm:gap-6 rounded-lg border border-border bg-surface-2 p-4 sm:p-5">
+                <a href={`/book/${book.slug}`} class="shrink-0 w-20 sm:w-28">
+                  <div class="aspect-[2/3] overflow-hidden rounded-md bg-surface-1">
+                    {book.cover_url ? (
+                      <img src={book.cover_url} alt={book.title} class="h-full w-full object-cover" />
+                    ) : (
+                      <div class="flex h-full w-full items-center justify-center bg-surface-3">
+                        <span class="font-heading text-lg font-bold text-text-dim">
+                          {book.title.charAt(0).toUpperCase()}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                </a>
+                <div class="flex flex-col gap-2 min-w-0 flex-1">
+                  <a href={`/book/${book.slug}`} class="hover:text-accent transition-colors">
+                    <h3 class="font-heading font-semibold text-sm sm:text-base leading-tight line-clamp-2">{book.title}</h3>
+                  </a>
+                  {desc && (
+                    <p class="text-xs sm:text-sm text-text-muted leading-relaxed line-clamp-2">{desc}</p>
+                  )}
+                  <div class="flex flex-col items-start gap-1.5 pt-1">
+                    <a
+                      href={`/book/${book.slug}`}
+                      class="inline-flex items-center gap-1 rounded-lg bg-accent px-3 py-1.5 text-xs font-medium text-white hover:bg-accent/90 transition-colors"
+                    >
+                      Ver más
+                    </a>
+                    <span class="text-sm font-bold text-text-primary">${(book.price / 100).toFixed(2)}</span>
+                  </div>
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      </section>
+    )}
+  </div>
+</StoreLayout>

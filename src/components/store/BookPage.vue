@@ -186,7 +186,7 @@
         </template>
 
         <template v-else>
-          <div v-if="viewMode === 'cards'" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
+          <div v-if="viewMode === 'cards'" class="grid grid-cols-[repeat(auto-fill,minmax(180px,1fr))] gap-4 sm:gap-6">
             <BookCard v-for="book in books" :key="book.id" :book="book" />
           </div>
 

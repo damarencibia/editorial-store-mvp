@@ -1,0 +1,75 @@
+---
+import StoreLayout from '../../layouts/StoreLayout.astro'
+import AuthorsPage from '../../components/store/AuthorsPage.vue'
+import { supabase } from '../../lib/supabase'
+
+let pageData: Record<string, any> = {
+  collections: [],
+  authors: [],
+}
+
+try {
+  const [colRes, catCountRes, bookRes, authRes] = await Promise.all([
+    supabase.from('collections').select('*, categories(id, name)').order('name'),
+    supabase.from('books').select('category_id').eq('is_visible', true).not('category_id', 'is', null),
+    supabase.from('books').select('author_id, category_id').eq('is_visible', true).not('author_id', 'is', null),
+    supabase.from('authors').select('id, name, slug, photo_url').order('name'),
+  ])
+
+  const catCountMap = new Map<number, number>()
+  for (const b of catCountRes.data ?? []) {
+    if (b.category_id != null) {
+      catCountMap.set(b.category_id, (catCountMap.get(b.category_id) ?? 0) + 1)
+    }
+  }
+
+  const authorBookMap = new Map<number, { count: number; category_ids: number[] }>()
+  for (const b of bookRes.data ?? []) {
+    if (b.author_id != null) {
+      const entry = authorBookMap.get(b.author_id) ?? { count: 0, category_ids: [] }
+      entry.count++
+      if (b.category_id != null && !entry.category_ids.includes(b.category_id)) {
+        entry.category_ids.push(b.category_id)
+      }
+      authorBookMap.set(b.author_id, entry)
+    }
+  }
+
+  const collections = (colRes.data ?? []).map((col: any) => ({
+    id: col.id,
+    name: col.name,
+    categories: (col.categories ?? []).map((cat: any) => ({
+      id: cat.id,
+      name: cat.name,
+      count: catCountMap.get(cat.id) ?? 0,
+    })),
+  }))
+
+  const authors = (authRes.data ?? []).map((a: any) => {
+    const bookInfo = authorBookMap.get(a.id) ?? { count: 0, category_ids: [] }
+    return {
+      id: a.id,
+      name: a.name,
+      slug: a.slug,
+      photo_url: a.photo_url,
+      book_count: bookInfo.count,
+      category_ids: bookInfo.category_ids,
+    }
+  }).filter(a => a.book_count > 0)
+
+  pageData = { collections, authors }
+} catch (e) {
+  console.error('Error loading authors page data:', e)
+}
+---
+
+<StoreLayout>
+  <title>Autores — Arraigo Editorial</title>
+  <meta property="og:title" slot="head" content="Autores — Arraigo Editorial" />
+  <meta property="og:description" slot="head" content="Explora nuestros autores y sus obras." />
+  <meta property="og:type" slot="head" content="website" />
+
+  <script id="authors-data" type="application/json" set:html={JSON.stringify(pageData)}></script>
+
+  <AuthorsPage client:only="vue" />
+</StoreLayout>
