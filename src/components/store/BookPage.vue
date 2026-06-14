@@ -463,7 +463,7 @@ interface PageData {
 
 const sortOptions = [
   { value: 'all', label: 'Todos' },
-  { value: 'trending', label: 'Tendencias' },
+  { value: 'trending', label: 'Trending' },
   { value: 'price_asc', label: 'Precio: de más bajo a más alto' },
   { value: 'price_desc', label: 'Precio: de más alto a más bajo' },
 ]

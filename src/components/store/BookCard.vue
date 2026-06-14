@@ -4,7 +4,7 @@
       <span v-if="book.is_trending"
         class="absolute top-2 left-2 z-10 rounded-full bg-orange-500 px-2 py-0.5 text-[10px] font-bold text-white shadow-sm"
       >
-        🔥 Tendencia
+        🔥 Trending
       </span>
       <a :href="`/book/${book.slug}`" class="flex h-full w-full items-center justify-center">
       <img
