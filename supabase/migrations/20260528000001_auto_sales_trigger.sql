@@ -6,7 +6,6 @@
 
 -- Grant execute on existing functions for all roles
 GRANT EXECUTE ON FUNCTION increment_sales_count TO anon, service_role;
-GRANT EXECUTE ON FUNCTION sync_best_sellers TO anon, service_role;
 
 -- =============================================
 -- Trigger function: process_order_sales
@@ -29,7 +28,7 @@ BEGIN
       WHERE id = (item->>'bookId')::bigint;
     END LOOP;
 
-    PERFORM sync_best_sellers();
+    PERFORM sync_trending();
   END IF;
 
   RETURN NEW;
@@ -63,7 +62,7 @@ BEGIN
       WHERE id = (item->>'bookId')::bigint;
     END LOOP;
 
-    PERFORM sync_best_sellers();
+    PERFORM sync_trending();
   END IF;
 
   RETURN NEW;

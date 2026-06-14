@@ -49,8 +49,7 @@ export interface Book {
   language: string
   published_at: string | null
   is_visible: boolean
-  is_best_seller: boolean
-  manual_best_seller: boolean
+  is_trending: boolean
   sales_count: number
   created_at?: string
 }

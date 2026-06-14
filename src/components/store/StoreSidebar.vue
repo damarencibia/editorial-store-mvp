@@ -77,14 +77,14 @@
           </a>
 
           <a
-            href="/best-sellers"
+            href="/tendencias"
             @click="close"
             class="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-text-muted hover:text-text-primary hover:bg-surface-3 transition-colors"
           >
             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+              <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
             </svg>
-            Más vendidos
+            Tendencias
           </a>
         </nav>
 

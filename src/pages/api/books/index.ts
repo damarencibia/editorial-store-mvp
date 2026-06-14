@@ -29,8 +29,9 @@ export const GET: APIRoute = async ({ url }) => {
       case 'price_desc':
         query = query.order('price', { ascending: false })
         break
-      case 'best_sellers':
-        query = query.order('sales_count', { ascending: false })
+      case 'trending':
+        query = query.order('is_trending', { ascending: false })
+                    .order('sales_count', { ascending: false })
         break
     }
   }
@@ -60,7 +61,7 @@ export const GET: APIRoute = async ({ url }) => {
         price: b.price,
         cover_url: b.cover_url,
         publisher: b.publisher,
-        is_best_seller: b.is_best_seller,
+        is_trending: b.is_trending,
         sales_count: b.sales_count,
       })),
       total: total ?? 0,

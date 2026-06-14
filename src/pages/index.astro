@@ -6,7 +6,7 @@ import { supabase } from '../lib/supabase'
 
 let error: string | null = null
 let collections: any[] = []
-let bestSellers: any[] = []
+let trending: any[] = []
 let topPicks: any[] = []
 try {
   const { data: colData, error: colErr } = await supabase
@@ -16,14 +16,14 @@ try {
   if (colErr) throw new Error('Error al cargar colecciones')
   collections = colData ?? []
 
-  const { data: bestData } = await supabase
+  const { data: trendingData } = await supabase
     .from('books')
     .select('*, authors!left(name), categories(name, slug)')
     .eq('is_visible', true)
-    .eq('is_best_seller', true)
+    .eq('is_trending', true)
     .order('sales_count', { ascending: false })
     .limit(9)
-  bestSellers = (bestData ?? []).map((b: any) => ({
+  trending = (trendingData ?? []).map((b: any) => ({
     ...b,
     author: b.authors?.name ?? 'Autor desconocido',
   }))
@@ -104,18 +104,18 @@ try {
     </section>
   )}
 
-  {bestSellers.length > 0 && (
+  {trending.length > 0 && (
     <section class="mb-16">
       <div class="flex items-center justify-between mb-6">
-        <h2 class="font-heading text-2xl font-semibold">Más vendidos</h2>
-        {bestSellers.length > 8 && (
-          <a href="/best-sellers" class="text-sm text-accent hover:text-accent/80 transition-colors">
+        <h2 class="font-heading text-2xl font-semibold">Tendencias</h2>
+        {trending.length > 8 && (
+          <a href="/tendencias" class="text-sm text-accent hover:text-accent/80 transition-colors">
             Ver todos &rarr;
           </a>
         )}
       </div>
       <div class="grid grid-cols-[repeat(auto-fill,minmax(180px,1fr))] gap-4 sm:gap-6">
-        {bestSellers.slice(0, 8).map((book) => (
+        {trending.slice(0, 8).map((book) => (
           <BookCard book={book} client:only="vue" />
         ))}
       </div>

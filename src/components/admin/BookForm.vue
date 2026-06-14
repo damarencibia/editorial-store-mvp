@@ -156,11 +156,6 @@
         <span class="text-sm text-text-primary">Visible en tienda</span>
       </label>
 
-      <label v-if="isEditing" class="flex items-center gap-3 cursor-pointer select-none">
-        <input type="checkbox" v-model="form.manualBestSeller" class="sr-only peer" />
-        <div class="w-10 h-5 bg-surface-3 rounded-full peer-checked:bg-accent relative transition-colors after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:after:translate-x-5"></div>
-        <span class="text-sm text-text-primary">Marcar como más vendido</span>
-      </label>
     </div>
 
     <p v-if="successMessage" class="text-sm text-green-400">{{ successMessage }}</p>
@@ -218,7 +213,6 @@ interface BookFormData {
   price: string
   coverUrl: string
   isVisible: boolean
-  manualBestSeller: boolean
 }
 
 const emit = defineEmits<{
@@ -252,7 +246,6 @@ const form = reactive<BookFormData>({
   price: '',
   coverUrl: '',
   isVisible: true,
-  manualBestSeller: false,
 })
 
 const slugTouched = ref(false)
@@ -290,7 +283,6 @@ onMounted(() => {
     form.price = data.price ?? ''
     form.coverUrl = data.coverUrl ?? ''
     form.isVisible = data.isVisible ?? true
-    form.manualBestSeller = data.isBestSeller ?? false
     categoryId.value = data.category_id ?? null
   }
 
@@ -364,7 +356,6 @@ async function handleSubmit() {
         cover_url: form.coverUrl.trim() || null,
         category_id: categoryId.value,
         is_visible: form.isVisible,
-        ...(isEditing.value ? { manual_best_seller: form.manualBestSeller } : {}),
       }),
     })
 

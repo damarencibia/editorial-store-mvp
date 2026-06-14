@@ -8,11 +8,11 @@ const { data: collections } = await supabase
   .select('*, categories(count)')
   .order('name')
 
-const { data: bestSellers } = await supabase
+const { data: trending } = await supabase
   .from('books')
   .select('*, categories(name, slug)')
   .eq('is_visible', true)
-  .eq('is_best_seller', true)
+  .eq('is_trending', true)
   .order('sales_count', { ascending: false })
   .limit(8)
 ---
@@ -26,11 +26,11 @@ const { data: bestSellers } = await supabase
       <p class="mt-2 text-text-muted">Explora nuestras colecciones curadas de libros.</p>
     </div>
 
-    {bestSellers && bestSellers.length > 0 && (
+    {trending && trending.length > 0 && (
       <section class="mb-12">
-        <h2 class="font-heading text-xl font-semibold mb-4">Más vendidos</h2>
+        <h2 class="font-heading text-xl font-semibold mb-4">Tendencias</h2>
         <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
-          {bestSellers.map((book) => (
+          {trending.map((book) => (
             <BookCard book={book} client:only="vue" />
           ))}
         </div>

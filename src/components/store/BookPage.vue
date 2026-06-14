@@ -439,7 +439,7 @@ interface BookData {
   price: number
   cover_url: string | null
   publisher: string | null
-  is_best_seller: boolean
+  is_trending: boolean
   sales_count: number
 }
 
@@ -463,7 +463,7 @@ interface PageData {
 
 const sortOptions = [
   { value: 'all', label: 'Todos' },
-  { value: 'best_sellers', label: 'Best Sellers' },
+  { value: 'trending', label: 'Tendencias' },
   { value: 'price_asc', label: 'Precio: de más bajo a más alto' },
   { value: 'price_desc', label: 'Precio: de más alto a más bajo' },
 ]

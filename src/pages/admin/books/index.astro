@@ -27,7 +27,6 @@ const mappedBooks = (books ?? []).map((b: any) => {
     category: b.categories?.name ?? '-',
     sales_count: b.sales_count ?? 0,
     is_visible: b.is_visible ?? true,
-    is_best_seller: b.is_best_seller ?? false,
   }
 })
 
@@ -44,14 +43,12 @@ const columns = [
 
 const actions = [
   { type: 'toggle', label: 'Mostrar', labelAlt: 'Ocultar', key: 'is_visible', apiAction: 'toggle_visibility' },
-  { type: 'toggle', label: 'Marcar más vendido', labelAlt: 'Quitar más vendido', key: 'is_best_seller', apiAction: 'toggle_best_seller' },
   { type: 'link', label: 'Editar', href: '/admin/books/{id}' },
 ]
 
 const selectable = true
 const bulkActions = [
   { action: 'toggle_visibility', label: 'Mostrar/Ocultar' },
-  { action: 'toggle_best_seller', label: 'Marcar/Quitar más vendido' },
   { action: 'delete', label: 'Eliminar', variant: 'danger' },
 ]
 ---

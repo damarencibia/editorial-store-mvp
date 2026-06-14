@@ -7,14 +7,14 @@ const { data: books } = await supabase
   .from('books')
   .select('*, categories(name, slug)')
   .eq('is_visible', true)
-  .eq('is_best_seller', true)
+  .eq('is_trending', true)
   .order('sales_count', { ascending: false })
 ---
 
 <StoreLayout>
-  <title>Más vendidos — Arraigo Editorial</title>
-  <meta property="og:title" slot="head" content="Más vendidos — Arraigo Editorial" />
-  <meta property="og:description" slot="head" content="Los libros más vendidos de nuestra colección." />
+  <title>Tendencias — Arraigo Editorial</title>
+  <meta property="og:title" slot="head" content="Tendencias — Arraigo Editorial" />
+  <meta property="og:description" slot="head" content="Los libros más populares del momento en nuestra colección." />
   <meta property="og:type" slot="head" content="website" />
 
   <section class="py-16">
@@ -22,8 +22,8 @@ const { data: books } = await supabase
       <a href="/" class="text-sm text-text-muted hover:text-text-primary transition-colors">&larr; Volver al inicio</a>
     </div>
 
-    <h1 class="font-heading text-3xl font-bold tracking-tight mb-2">Más vendidos</h1>
-    <p class="text-text-muted mb-8">Los títulos más populares de nuestra colección.</p>
+    <h1 class="font-heading text-3xl font-bold tracking-tight mb-2">Tendencias</h1>
+    <p class="text-text-muted mb-8">Los títulos más populares de los últimos 14 días.</p>
 
     {books && books.length > 0 ? (
       <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
@@ -33,7 +33,7 @@ const { data: books } = await supabase
       </div>
     ) : (
       <p class="text-text-muted text-center py-16">
-        No hay libros más vendidos por el momento.
+        No hay libros en tendencia por el momento.
       </p>
     )}
   </section>

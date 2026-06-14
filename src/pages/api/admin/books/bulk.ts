@@ -59,27 +59,6 @@ export const POST: APIRoute = async ({ request }) => {
         return new Response(JSON.stringify({ success: true }), { status: 200, headers })
       }
 
-      case 'toggle_best_seller': {
-        const { data: books } = await serverSupabase
-          .from('books')
-          .select('id, is_best_seller')
-          .in('id', ids)
-
-        if (!books) {
-          return new Response(JSON.stringify({ error: 'Libros no encontrados' }), { status: 404, headers })
-        }
-
-        for (const book of books) {
-          const newValue = !book.is_best_seller
-          await serverSupabase
-            .from('books')
-            .update({ manual_best_seller: newValue, is_best_seller: newValue })
-            .eq('id', book.id)
-        }
-
-        return new Response(JSON.stringify({ success: true }), { status: 200, headers })
-      }
-
       case 'delete': {
         const deleteImages = delete_images === true
 
