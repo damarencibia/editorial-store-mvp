@@ -143,7 +143,8 @@ const formattedPrice = `$${(book.price / 100).toFixed(2)}`
               <details class="group">
                 <summary class="text-xs text-text-muted leading-relaxed cursor-pointer marker:hidden list-none [&::-webkit-details-marker]:hidden">
                   <span class="line-clamp-3 group-open:line-clamp-none">{book.authors.bio}</span>
-                  <span class="text-accent hover:text-accent/80 text-xs font-medium mt-0.5 inline-block transition-colors">Leer más</span>
+                  <span class="text-accent hover:text-accent/80 text-xs font-medium mt-0.5 inline-block transition-colors group-open:hidden">Leer más</span>
+                  <span class="text-accent hover:text-accent/80 text-xs font-medium mt-0.5 hidden group-open:inline-block transition-colors">Leer menos</span>
                 </summary>
               </details>
             )}
