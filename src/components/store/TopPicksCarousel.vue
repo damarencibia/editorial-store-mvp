@@ -36,7 +36,7 @@
     </button>
   </div>
 
-  <div v-else-if="books.length" class="grid grid-cols-[repeat(auto-fill,minmax(180px,1fr))] gap-4 sm:gap-6">
+  <div v-else-if="books.length" class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 gap-3 sm:gap-4">
     <BookCard v-for="book in books" :key="book.id" :book="book" />
   </div>
 </template>
