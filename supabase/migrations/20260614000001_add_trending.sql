@@ -7,8 +7,6 @@ ALTER TABLE books DROP COLUMN IF EXISTS manual_best_seller;
 DROP FUNCTION IF EXISTS sync_best_sellers;
 ALTER TABLE books ADD COLUMN IF NOT EXISTS is_trending BOOLEAN NOT NULL DEFAULT false;
 
-GRANT EXECUTE ON FUNCTION sync_trending TO anon, service_role;
-
 CREATE OR REPLACE FUNCTION sync_trending()
 RETURNS VOID
 LANGUAGE plpgsql
@@ -30,3 +28,5 @@ BEGIN
   );
 END;
 $$;
+
+GRANT EXECUTE ON FUNCTION sync_trending TO anon, service_role;
