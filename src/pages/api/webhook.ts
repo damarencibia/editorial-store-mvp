@@ -3,6 +3,10 @@ import { stripe } from '../../lib/stripe'
 import { supabaseAdmin } from '../../lib/supabase-admin'
 
 export const POST: APIRoute = async ({ request }) => {
+  if (!import.meta.env.SUPABASE_SERVICE_ROLE_KEY) {
+    console.error('SUPABASE_SERVICE_ROLE_KEY is not set — book sales_count updates may fail')
+  }
+
   const body = await request.text()
   const sig = request.headers.get('stripe-signature')
 
@@ -40,31 +44,49 @@ export const POST: APIRoute = async ({ request }) => {
       return new Response(JSON.stringify({ error: 'Failed to save order' }), { status: 500 })
     }
 
+    let updated = 0
     for (const item of items) {
+      const { error: rpcErr } = await supabaseAdmin.rpc('increment_sales_count', {
+        book_id: item.bookId,
+        quantity: item.quantity,
+      })
+      if (!rpcErr) {
+        updated++
+        continue
+      }
+
+      console.warn(`[sales] RPC failed for book ${item.bookId}, trying direct update:`, rpcErr)
+
       const { data: book, error: readErr } = await supabaseAdmin
         .from('books')
         .select('sales_count')
         .eq('id', item.bookId)
-        .single()
+        .maybeSingle()
 
-      if (readErr || !book) {
-        console.error(`Failed to read sales_count for book ${item.bookId}:`, readErr)
+      if (readErr) {
+        console.error(`[sales] read error book ${item.bookId}:`, readErr)
+        continue
+      }
+      if (!book) {
+        console.error(`[sales] book ${item.bookId} not found (id mismatch?)`)
         continue
       }
 
       const { error: updateErr } = await supabaseAdmin
         .from('books')
-        .update({ sales_count: book.sales_count + item.quantity })
+        .update({ sales_count: book.sales_count + (item.quantity ?? 1) })
         .eq('id', item.bookId)
 
       if (updateErr) {
-        console.error(`Failed to update sales_count for book ${item.bookId}:`, updateErr)
+        console.error(`[sales] update error book ${item.bookId}:`, updateErr)
+      } else {
+        updated++
       }
     }
 
     await syncTrending()
 
-    console.log('Order saved and sales updated:', session.id)
+    console.log(`Order ${session.id}: ${items.length} items, ${updated} sales_count updated`)
   }
 
   return new Response(JSON.stringify({ received: true }), {
@@ -74,12 +96,10 @@ export const POST: APIRoute = async ({ request }) => {
 }
 
 async function syncTrending() {
-  try {
-    await supabaseAdmin.rpc('sync_trending')
-    return
-  } catch {
-    console.warn('sync_trending RPC not available, calculating trending from JS')
-  }
+  const { error: rpcErr } = await supabaseAdmin.rpc('sync_trending')
+  if (!rpcErr) return
+
+  console.warn('sync_trending RPC failed, using JS fallback:', rpcErr)
 
   const fourteenDaysAgo = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString()
 
@@ -90,34 +110,35 @@ async function syncTrending() {
     .eq('status', 'paid')
 
   if (ordersErr) {
-    console.error('Failed to fetch recent orders for trending:', ordersErr)
+    console.error('Failed to fetch orders for trending:', ordersErr)
     return
   }
 
   const salesMap = new Map<number, number>()
   for (const order of orders ?? []) {
     for (const item of order.items ?? []) {
-      const bookId: number = item.bookId
+      const id: number = item.bookId
       const qty: number = item.quantity ?? 1
-      salesMap.set(bookId, (salesMap.get(bookId) ?? 0) + qty)
+      salesMap.set(id, (salesMap.get(id) ?? 0) + qty)
     }
   }
 
   const top20 = [...salesMap.entries()]
     .sort((a, b) => b[1] - a[1])
     .slice(0, 20)
-    .map(([bookId]) => bookId)
+    .map(([id]) => id)
 
-  await supabaseAdmin.from('books').update({ is_trending: false }).neq('is_trending', false)
+  const { error: resetErr } = await supabaseAdmin
+    .from('books')
+    .update({ is_trending: false })
+    .neq('is_trending', false)
+  if (resetErr) console.error('Failed to reset trending:', resetErr)
 
   if (top20.length > 0) {
-    const { error: trendingErr } = await supabaseAdmin
+    const { error: setErr } = await supabaseAdmin
       .from('books')
       .update({ is_trending: true })
       .in('id', top20)
-
-    if (trendingErr) {
-      console.error('Failed to update trending flags:', trendingErr)
-    }
+    if (setErr) console.error('Failed to set trending:', setErr)
   }
 }
