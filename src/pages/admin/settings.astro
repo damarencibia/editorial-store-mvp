@@ -1,0 +1,31 @@
+---
+import AdminLayout from '../../layouts/AdminLayout.astro'
+import SettingsForm from '../../components/admin/SettingsForm.vue'
+import { getServerSupabase } from '../../lib/auth'
+import { getServerProfile } from '../../lib/profiles'
+
+const supabase = getServerSupabase(Astro.request, (name, value, options) => {
+  Astro.cookies.set(name, value, options as any)
+})
+const profile = await getServerProfile(supabase)
+if (!profile || profile.role !== 'admin') return Astro.redirect('/')
+
+const { data: settings } = await supabase
+  .from('site_settings')
+  .select('*')
+  .single()
+---
+
+<AdminLayout>
+  <title>Ajustes — Admin</title>
+
+  <div class="max-w-2xl">
+    <h1 class="font-heading text-2xl font-bold tracking-tight mb-6">Ajustes</h1>
+
+    <SettingsForm client:load />
+    <script id="settings-data" type="application/json" set:html={JSON.stringify({
+      show_top_picks: settings?.show_top_picks ?? true,
+      show_trending: settings?.show_trending ?? true,
+    })}></script>
+  </div>
+</AdminLayout>

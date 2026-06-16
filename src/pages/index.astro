@@ -8,6 +8,7 @@ let error: string | null = null
 let collections: any[] = []
 let trending: any[] = []
 let topPicks: any[] = []
+let settings: any = null
 try {
   const { data: colData, error: colErr } = await supabase
     .from('collections')
@@ -33,6 +34,12 @@ try {
     .select('position, books(*)')
     .order('position')
   topPicks = (picksData ?? []).map(p => p.books).filter(Boolean)
+
+  const { data: settingsData } = await supabase
+    .from('site_settings')
+    .select('*')
+    .single()
+  settings = settingsData
 } catch (e) {
   error = e instanceof Error ? e.message : 'Error al cargar el contenido'
 }
@@ -94,7 +101,7 @@ try {
     </div>
   )}
 
-  {topPicks.length > 0 && (
+  {settings?.show_top_picks !== false && topPicks.length > 0 && (
     <section class="mb-16">
       <div class="mb-6">
         <h2 class="font-heading text-2xl font-semibold">Top 10 del mes</h2>
@@ -104,7 +111,7 @@ try {
     </section>
   )}
 
-  {trending.length > 0 && (
+  {settings?.show_trending !== false && trending.length > 0 && (
     <section class="mb-16">
       <div class="flex items-center justify-between mb-6">
         <h2 class="font-heading text-2xl font-semibold">Trending</h2>
