@@ -27,7 +27,7 @@ LANGUAGE plpgsql
 SECURITY DEFINER
 AS $$
 BEGIN
-  UPDATE books SET is_trending = false;
+  UPDATE books SET is_trending = false WHERE is_trending = true;
 
   UPDATE books SET is_trending = true
   WHERE id IN (
@@ -55,7 +55,7 @@ UPDATE books SET sales_count = (
   CROSS JOIN jsonb_array_elements(orders.items) AS item
   WHERE item->>'bookId' = books.id::text
     AND orders.status = 'paid'
-);
+) WHERE true;
 
 -- =============================================
 -- 4. Run sync_trending to mark trending books

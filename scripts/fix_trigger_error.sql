@@ -1,6 +1,6 @@
 -- =============================================
 -- Fix: remove broken trigger trg_process_order_sales
--- and provide a safe insert_order function
+-- fix sync_trending(), and provide a safe insert_order
 -- =============================================
 
 -- Drop the problematic trigger that calls the
@@ -8,8 +8,34 @@
 DROP TRIGGER IF EXISTS trg_process_order_sales ON public.orders;
 DROP TRIGGER IF EXISTS trg_reverse_order_sales ON public.orders;
 
--- Replace the function with one that gracefully
--- handles missing sync_trending function
+-- Fix sync_trending() to use WHERE clause
+-- (Supabase blocks bare UPDATE without WHERE)
+CREATE OR REPLACE FUNCTION sync_trending()
+RETURNS VOID
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+BEGIN
+  UPDATE books SET is_trending = false WHERE is_trending = true;
+
+  UPDATE books SET is_trending = true
+  WHERE id IN (
+    SELECT (item->>'bookId')::bigint
+    FROM orders
+    CROSS JOIN jsonb_array_elements(items) AS item
+    WHERE status = 'paid'
+      AND created_at >= NOW() - INTERVAL '14 days'
+    GROUP BY (item->>'bookId')::bigint
+    ORDER BY SUM((item->>'quantity')::int) DESC
+    LIMIT 20
+  );
+END;
+$$;
+
+GRANT EXECUTE ON FUNCTION sync_trending TO anon, service_role;
+
+-- Replace the trigger function with one that gracefully
+-- handles errors from sync_trending
 CREATE OR REPLACE FUNCTION process_order_sales()
 RETURNS TRIGGER
 LANGUAGE plpgsql
