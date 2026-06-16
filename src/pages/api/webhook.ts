@@ -132,14 +132,17 @@ async function syncTrending() {
   }
 
   const top20 = [...salesMap.entries()]
+    .filter(([, qty]) => qty >= 3)
     .sort((a, b) => b[1] - a[1])
     .slice(0, 20)
     .map(([id]) => id)
 
+  // Reset only auto-trending books (skip manual_trending = true)
   const { error: resetErr } = await supabaseAdmin
     .from('books')
     .update({ is_trending: false })
-    .neq('is_trending', false)
+    .eq('manual_trending', false)
+    .eq('is_trending', true)
   if (resetErr) console.error('Failed to reset trending:', resetErr)
 
   if (top20.length > 0) {
@@ -147,6 +150,7 @@ async function syncTrending() {
       .from('books')
       .update({ is_trending: true })
       .in('id', top20)
+      .eq('is_visible', true)
     if (setErr) console.error('Failed to set trending:', setErr)
   }
 }

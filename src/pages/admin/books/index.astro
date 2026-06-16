@@ -15,6 +15,12 @@ const { data: books } = await supabase.from('books').select('*, categories(name)
 const mappedBooks = (books ?? []).map((b: any) => {
   const price = '$' + (b.price / 100).toFixed(2)
   const date = new Date(b.created_at).toLocaleDateString('es-ES')
+  let trendingLabel = ''
+  if (b.manual_trending) {
+    trendingLabel = 'Manual'
+  } else if (b.is_trending) {
+    trendingLabel = 'Auto'
+  }
   return {
     id: b.id,
     title: b.title,
@@ -27,6 +33,7 @@ const mappedBooks = (books ?? []).map((b: any) => {
     category: b.categories?.name ?? '-',
     sales_count: b.sales_count ?? 0,
     is_visible: b.is_visible ?? true,
+    trending: trendingLabel,
   }
 })
 
@@ -38,6 +45,7 @@ const columns = [
   { key: 'category', label: 'Categoría' },
   { key: 'price', label: 'Precio' },
   { key: 'sales_count', label: 'Ventas' },
+  { key: 'trending', label: 'Trending' },
   { key: 'created_at', label: 'Creado' },
 ]
 

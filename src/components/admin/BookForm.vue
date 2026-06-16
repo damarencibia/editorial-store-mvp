@@ -156,6 +156,12 @@
         <span class="text-sm text-text-primary">Visible en tienda</span>
       </label>
 
+      <label v-if="isEditing" class="flex items-center gap-3 cursor-pointer select-none">
+        <input type="checkbox" v-model="form.manualTrending" class="sr-only peer" />
+        <div class="w-10 h-5 bg-surface-3 rounded-full peer-checked:bg-orange-500 relative transition-colors after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:after:translate-x-5"></div>
+        <span class="text-sm text-text-primary">Trending manual</span>
+        <span v-if="form.isTrending && !form.manualTrending" class="text-xs text-orange-400">(automático)</span>
+      </label>
     </div>
 
     <p v-if="successMessage" class="text-sm text-green-400">{{ successMessage }}</p>
@@ -213,6 +219,8 @@ interface BookFormData {
   price: string
   coverUrl: string
   isVisible: boolean
+  isTrending: boolean
+  manualTrending: boolean
 }
 
 const emit = defineEmits<{
@@ -246,6 +254,8 @@ const form = reactive<BookFormData>({
   price: '',
   coverUrl: '',
   isVisible: true,
+  isTrending: false,
+  manualTrending: false,
 })
 
 const slugTouched = ref(false)
@@ -260,6 +270,10 @@ watch(() => form.title, (val) => {
 watch(() => form.slug, () => {
   if (!_settingSlug && form.slug) slugTouched.value = true
   _settingSlug = false
+})
+
+watch(() => form.manualTrending, (val) => {
+  if (val) form.isTrending = true
 })
 
 onMounted(() => {
@@ -283,6 +297,8 @@ onMounted(() => {
     form.price = data.price ?? ''
     form.coverUrl = data.coverUrl ?? ''
     form.isVisible = data.isVisible ?? true
+    form.isTrending = data.isTrending ?? false
+    form.manualTrending = data.manualTrending ?? false
     categoryId.value = data.category_id ?? null
   }
 
@@ -356,6 +372,8 @@ async function handleSubmit() {
         cover_url: form.coverUrl.trim() || null,
         category_id: categoryId.value,
         is_visible: form.isVisible,
+        is_trending: form.isTrending,
+        manual_trending: form.manualTrending,
       }),
     })
 
