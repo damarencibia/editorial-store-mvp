@@ -46,17 +46,6 @@ export const POST: APIRoute = async ({ request }) => {
 
     let updated = 0
     for (const item of items) {
-      const { error: rpcErr } = await supabaseAdmin.rpc('increment_sales_count', {
-        book_id: item.bookId,
-        quantity: item.quantity,
-      })
-      if (!rpcErr) {
-        updated++
-        continue
-      }
-
-      console.warn(`[sales] RPC failed for book ${item.bookId}, trying direct update:`, rpcErr)
-
       const { data: book, error: readErr } = await supabaseAdmin
         .from('books')
         .select('sales_count')
@@ -64,21 +53,25 @@ export const POST: APIRoute = async ({ request }) => {
         .maybeSingle()
 
       if (readErr) {
-        console.error(`[sales] read error book ${item.bookId}:`, readErr)
+        console.error(`[sales] read error book ${item.bookId}: ${readErr.message}`)
         continue
       }
       if (!book) {
-        console.error(`[sales] book ${item.bookId} not found (id mismatch?)`)
+        console.error(`[sales] book ${item.bookId} not found — possible id mismatch with items metadata`)
         continue
       }
 
+      const currentQty = item.quantity ?? 1
+      const newSales = book.sales_count + currentQty
+      console.log(`[sales] book ${item.bookId}: ${book.sales_count} + ${currentQty} = ${newSales}`)
+
       const { error: updateErr } = await supabaseAdmin
         .from('books')
-        .update({ sales_count: book.sales_count + (item.quantity ?? 1) })
+        .update({ sales_count: newSales })
         .eq('id', item.bookId)
 
       if (updateErr) {
-        console.error(`[sales] update error book ${item.bookId}:`, updateErr)
+        console.error(`[sales] update error book ${item.bookId}: ${updateErr.message}`)
       } else {
         updated++
       }
