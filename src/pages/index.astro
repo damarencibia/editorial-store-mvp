@@ -33,7 +33,7 @@ try {
     .from('monthly_picks')
     .select('position, books(*)')
     .order('position')
-  topPicks = (picksData ?? []).map(p => p.books).filter(Boolean)
+  topPicks = (picksData ?? []).map(p => p.books).filter(b => b && b.is_visible !== false)
 
   const { data: settingsData } = await supabase
     .from('site_settings')
