@@ -31,6 +31,7 @@ export const POST: APIRoute = async ({ request }) => {
       ? JSON.parse(session.metadata.items)
       : []
 
+    let orderId: number | null = null
     const { error: orderErr } = await supabaseAdmin.from('orders').insert({
       customer_email: session.customer_details?.email ?? null,
       items,
@@ -40,8 +41,22 @@ export const POST: APIRoute = async ({ request }) => {
     })
 
     if (orderErr) {
-      console.error('Error saving order:', orderErr)
-      return new Response(JSON.stringify({ error: 'Failed to save order' }), { status: 500 })
+      console.error('Error saving order via insert, trying RPC fallback:', orderErr)
+      const { data: fallbackId, error: fallbackErr } = await supabaseAdmin.rpc('insert_order', {
+        p_email: session.customer_details?.email ?? null,
+        p_items: items,
+        p_total: session.amount_total ?? 0,
+        p_session_id: session.id,
+        p_status: 'paid',
+      })
+      if (fallbackErr) {
+        console.error('Error saving order via RPC fallback:', fallbackErr)
+        return new Response(JSON.stringify({ error: 'Failed to save order' }), { status: 500 })
+      }
+      orderId = fallbackId
+      console.log('Order saved via RPC fallback, id:', orderId)
+    } else {
+      orderId = 1
     }
 
     let updated = 0
