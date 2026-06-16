@@ -1,15 +1,18 @@
 -- =============================================
--- Fix: remove broken trigger trg_process_order_sales
--- fix sync_trending(), and provide a safe insert_order
+-- Fix: drop broken trigger, fix sync_trending(),
+-- and provide safe insert_order function
+-- =============================================
+-- The webhook already handles sales_count updates
+-- and sync_trending directly. The trigger is
+-- redundant and causes errors.
 -- =============================================
 
--- Drop the problematic trigger that calls the
--- now-deleted sync_best_sellers() function
+-- 1. Drop the problematic trigger and its function
 DROP TRIGGER IF EXISTS trg_process_order_sales ON public.orders;
 DROP TRIGGER IF EXISTS trg_reverse_order_sales ON public.orders;
 
--- Fix sync_trending() to use WHERE clause
--- (Supabase blocks bare UPDATE without WHERE)
+-- 2. Fix sync_trending() to use WHERE clause
+--    (Supabase blocks bare UPDATE without WHERE)
 CREATE OR REPLACE FUNCTION sync_trending()
 RETURNS VOID
 LANGUAGE plpgsql
@@ -34,45 +37,8 @@ $$;
 
 GRANT EXECUTE ON FUNCTION sync_trending TO anon, service_role;
 
--- Replace the trigger function with one that gracefully
--- handles errors from sync_trending
-CREATE OR REPLACE FUNCTION process_order_sales()
-RETURNS TRIGGER
-LANGUAGE plpgsql
-SECURITY DEFINER
-AS $$
-DECLARE
-  item JSONB;
-BEGIN
-  IF NEW.status = 'paid' AND NEW.items IS NOT NULL THEN
-    FOR item IN SELECT * FROM jsonb_array_elements(NEW.items)
-    LOOP
-      UPDATE books
-      SET sales_count = sales_count + (item->>'quantity')::int
-      WHERE id = (item->>'bookId')::bigint;
-    END LOOP;
-
-    BEGIN
-      PERFORM sync_trending();
-    EXCEPTION WHEN undefined_function THEN
-      NULL;
-    END;
-  END IF;
-
-  RETURN NEW;
-END;
-$$;
-
--- Re-create the trigger with the fixed function
-DROP TRIGGER IF EXISTS trg_process_order_sales ON public.orders;
-CREATE TRIGGER trg_process_order_sales
-AFTER INSERT ON public.orders
-FOR EACH ROW
-EXECUTE FUNCTION process_order_sales();
-
--- Safe insert function that bypasses triggers
--- Used as fallback in the webhook when the normal
--- INSERT fails due to trigger errors
+-- 3. Safe insert function that bypasses triggers
+--    Used as RPC fallback in webhook
 CREATE OR REPLACE FUNCTION insert_order(
   p_email TEXT,
   p_items JSONB,
