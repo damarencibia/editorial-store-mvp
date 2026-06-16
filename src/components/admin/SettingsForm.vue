@@ -34,7 +34,7 @@
 </template>
 
 <script setup lang="ts">
-import { reactive, ref } from 'vue'
+import { reactive, ref, onMounted } from 'vue'
 
 interface SettingsFormData {
   showTopPicks: boolean
@@ -50,12 +50,14 @@ const submitting = ref(false)
 const submitError = ref('')
 const successMessage = ref('')
 
-const el = document.getElementById('settings-data')
-if (el) {
-  const data = JSON.parse(el.textContent || '{}')
-  form.showTopPicks = data.show_top_picks ?? true
-  form.showTrending = data.show_trending ?? true
-}
+onMounted(() => {
+  const el = document.getElementById('settings-data')
+  if (el) {
+    const data = JSON.parse(el.textContent || '{}')
+    form.showTopPicks = data.show_top_picks ?? true
+    form.showTrending = data.show_trending ?? true
+  }
+})
 
 async function handleSubmit() {
   submitting.value = true
