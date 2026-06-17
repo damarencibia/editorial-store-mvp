@@ -1,0 +1,12 @@
+---
+---
+
+<script>
+import { supabase } from '../../lib/supabase'
+
+supabase.auth.getSession().then(({ data: { session } }) => {
+  window.location.href = session ? '/' : '/auth/login'
+})
+</script>
+
+<p class="text-center text-text-muted py-20">Verificando...</p>

@@ -1,5 +1,6 @@
 ---
 import StoreLayout from '../../layouts/StoreLayout.astro'
+import ProfileForm from '../../components/store/ProfileForm.vue'
 import { getServerSupabase } from '../../lib/auth'
 import { getServerProfile } from '../../lib/profiles'
 
@@ -67,10 +68,10 @@ const statusColors: Record<string, string> = {
         </div>
       )}
 
-      <div>
-        <p class="text-xs text-text-muted uppercase tracking-wider font-semibold">Rol</p>
-        <p class="text-sm mt-1 capitalize">{profile?.role ?? 'customer'}</p>
-      </div>
+    </div>
+
+    <div class="mt-8">
+      <ProfileForm client:only="vue" />
     </div>
 
     {
