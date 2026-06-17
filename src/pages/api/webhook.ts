@@ -31,13 +31,32 @@ export const POST: APIRoute = async ({ request }) => {
       ? JSON.parse(session.metadata.items)
       : []
 
+    const sd = session.shipping_details
+    const shippingName = sd?.name ?? null
+    const shippingAddress = sd?.address ? {
+      line1: sd.address.line1 ?? null,
+      line2: sd.address.line2 ?? null,
+      city: sd.address.city ?? null,
+      state: sd.address.state ?? null,
+      postal_code: sd.address.postal_code ?? null,
+      country: sd.address.country ?? null,
+    } : null
+    const shippingPhone = session.customer_details?.phone ?? null
+    const shippingCountry = session.metadata?.country ?? null
+    const userId = session.metadata?.user_id ?? null
+
     let orderId: number | null = null
     const { error: orderErr } = await supabaseAdmin.from('orders').insert({
       customer_email: session.customer_details?.email ?? null,
+      user_id: userId,
       items,
       total: session.amount_total ?? 0,
       stripe_session_id: session.id,
       status: 'paid',
+      shipping_name: shippingName,
+      shipping_address: shippingAddress,
+      shipping_phone: shippingPhone,
+      shipping_country: shippingCountry,
     })
 
     if (orderErr) {

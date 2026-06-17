@@ -32,6 +32,7 @@
               </td>
               <td v-for="col in columns" :key="col.key" class="px-4 py-3 text-text-primary">
                 <span v-if="col.key === 'items_summary'">{{ row[col.key] }}</span>
+                <span v-else-if="col.key === 'status'" v-html="row[col.key]"></span>
                 <span v-else>{{ row[col.key] }}</span>
               </td>
             </tr>
@@ -129,8 +130,10 @@ const parsedOrders = computed(() => {
 
 const columns = [
   { key: 'customer_email', label: 'Cliente' },
+  { key: 'shipping', label: 'Envío' },
   { key: 'items_summary', label: 'Artículos' },
   { key: 'total', label: 'Total' },
+  { key: 'status', label: 'Estado' },
   { key: 'created_at', label: 'Fecha' },
 ]
 
@@ -150,16 +153,48 @@ function formatItemsSummary(items: any[]): string {
   return `${items.length} artículos`
 }
 
+function formatShipping(row: any): string {
+  const parts: string[] = []
+  if (row.shipping_name) parts.push(row.shipping_name)
+  if (row.shipping_address?.line1) parts.push(row.shipping_address.line1)
+  if (row.shipping_country) parts.push(row.shipping_country)
+  return parts.length > 0 ? parts.join(', ') : '—'
+}
+
+function statusBadge(status: string): string {
+  const colors: Record<string, string> = {
+    pending: 'text-yellow-400 bg-yellow-400/10',
+    paid: 'text-green-400 bg-green-400/10',
+    shipped: 'text-blue-400 bg-blue-400/10',
+    cancelled: 'text-red-400 bg-red-400/10',
+  }
+  const cls = colors[status] || 'text-text-muted bg-surface-2'
+  const labels: Record<string, string> = {
+    pending: 'Pendiente',
+    paid: 'Pagado',
+    shipped: 'Enviado',
+    cancelled: 'Cancelado',
+  }
+  return `<span class="inline-block rounded-full px-2.5 py-0.5 text-xs font-medium ${cls}">${labels[status] || status}</span>`
+}
+
 const rows = computed(() => {
   const mapped = (parsedOrders.value ?? []).map((o) => ({
     id: o.id,
-    customer_email: o.customer_email,
+    customer_email: o.customer_email || '—',
+    shipping: formatShipping(o),
+    _shipping: o.shipping_name || '',
     total: formatPrice(o.total),
     _total: o.total,
+    status: statusBadge(o.status || 'pending'),
+    _status: o.status || 'pending',
     created_at: new Date(o.created_at).toLocaleDateString('es-ES'),
     _created_at: o.created_at,
     items: o.items ?? [],
     items_summary: formatItemsSummary(o.items ?? []),
+    shipping_name: o.shipping_name,
+    shipping_address: o.shipping_address,
+    shipping_country: o.shipping_country,
   }))
   return mapped
 })
@@ -182,6 +217,8 @@ const sortedRows = computed(() => {
   if (sortKey.value) {
     const field = sortKey.value === 'total' ? '_total'
       : sortKey.value === 'created_at' ? '_created_at'
+      : sortKey.value === 'status' ? '_status'
+      : sortKey.value === 'shipping' ? '_shipping'
       : sortKey.value
     items.sort((a, b) => {
       const aVal = a[field]
@@ -206,5 +243,4 @@ const visiblePages = computed(() => {
   if (current >= total - 2) return Array.from({ length: 5 }, (_, i) => total - 4 + i)
   return [current - 2, current - 1, current, current + 1, current + 2]
 })
-
 </script>

@@ -1,0 +1,24 @@
+---
+import StoreLayout from '../layouts/StoreLayout.astro'
+import CheckoutForm from '../components/store/CheckoutForm.vue'
+import { getServerSupabase } from '../lib/auth'
+import { getServerProfile } from '../lib/profiles'
+
+const supabase = getServerSupabase(Astro.request, (name, value, options) => {
+  Astro.cookies.set(name, value, options as any)
+})
+const { data: { user } } = await supabase.auth.getUser()
+
+if (!user) {
+  return Astro.redirect('/auth/login')
+}
+---
+
+<StoreLayout>
+  <title>Checkout — Arraigo Editorial</title>
+
+  <div class="max-w-4xl mx-auto py-8 sm:py-12 px-4 sm:px-6">
+    <h1 class="font-heading text-2xl font-bold tracking-tight mb-6">Checkout</h1>
+    <CheckoutForm client:only="vue" />
+  </div>
+</StoreLayout>

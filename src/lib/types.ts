@@ -67,10 +67,22 @@ export interface CartItem {
 export interface Order {
   id: number
   customer_email: string | null
+  user_id: string | null
   items: CartItem[]
   total: number
   stripe_session_id: string | null
   status: 'pending' | 'paid' | 'shipped' | 'cancelled'
+  shipping_name: string | null
+  shipping_address: {
+    line1: string
+    line2?: string
+    city: string
+    state: string
+    postal_code: string
+    country: string
+  } | null
+  shipping_phone: string | null
+  shipping_country: string | null
   created_at: string
 }
 

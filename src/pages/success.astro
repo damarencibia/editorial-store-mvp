@@ -1,24 +1,83 @@
 ---
 import StoreLayout from '../layouts/StoreLayout.astro'
+import { stripe } from '../lib/stripe'
+import { getServerSupabase } from '../lib/auth'
+import { getServerProfile } from '../lib/profiles'
+import type { Order } from '../lib/types'
+
+const supabase = getServerSupabase(Astro.request, (name, value, options) => {
+  Astro.cookies.set(name, value, options as any)
+})
+const { data: { user } } = await supabase.auth.getUser()
+
+const sessionId = Astro.url.searchParams.get('session_id')
+
+let order: Order | null = null
+
+if (sessionId) {
+  const { data } = await supabase
+    .from('orders')
+    .select('*')
+    .eq('stripe_session_id', sessionId)
+    .maybeSingle()
+  order = data
+}
+
+let sessionEmail: string | null = null
+let sessionShipping: any = null
+
+if (sessionId && !order) {
+  try {
+    const checkoutSession = await stripe.checkout.sessions.retrieve(sessionId)
+    sessionEmail = checkoutSession.customer_details?.email ?? null
+    sessionShipping = checkoutSession.shipping_details
+  } catch (e) {
+    console.error('Failed to retrieve Stripe session:', e)
+  }
+}
 ---
 
 <StoreLayout>
   <title>Pago exitoso — Arraigo Editorial</title>
-  <div class="flex flex-col items-center justify-center py-20 text-center">
+  <div class="flex flex-col items-center justify-center py-20 text-center px-4">
     <div class="mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-green-500/10">
       <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-green-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <polyline points="20 6 9 17 4 12" />
       </svg>
     </div>
-    <h1 class="font-heading text-3xl font-bold tracking-tight mb-2">Payment Successful!</h1>
-    <p class="text-text-muted mb-8 max-w-md">
-      Thank you for your purchase. Your order has been placed and you'll receive a confirmation shortly.
+    <h1 class="font-heading text-3xl font-bold tracking-tight mb-2">¡Pago exitoso!</h1>
+    <p class="text-text-muted mb-6 max-w-md">
+      Gracias por tu compra. Recibirás un correo de confirmación pronto.
     </p>
+
+    <div class="max-w-sm w-full text-left rounded-lg border border-border bg-surface-2 p-5 mb-8">
+      <h2 class="font-heading text-sm font-semibold mb-3 uppercase tracking-wider text-text-muted">Resumen de envío</h2>
+      <div class="space-y-2 text-sm">
+        <p class="text-text-primary font-medium">
+          {order?.shipping_name || sessionShipping?.name || '—'}
+        </p>
+        <p class="text-text-muted">
+          {order?.shipping_address ? `${order.shipping_address.line1}${order.shipping_address.line2 ? ', ' + order.shipping_address.line2 : ''}` : ''}
+          {sessionShipping?.address ? `${sessionShipping.address.line1}${sessionShipping.address.line2 ? ', ' + sessionShipping.address.line2 : ''}` : ''}
+        </p>
+        <p class="text-text-muted">
+          {order?.shipping_address ? `${order.shipping_address.city}, ${order.shipping_address.state} ${order.shipping_address.postal_code}` : ''}
+          {sessionShipping?.address ? `${sessionShipping.address.city}, ${sessionShipping.address.state} ${sessionShipping.address.postal_code}` : ''}
+        </p>
+        <p class="text-text-muted">
+          {order?.shipping_phone || sessionShipping?.phone || ''}
+        </p>
+        <p class="text-xs text-text-dim">
+          Pedido: {order?.id || sessionId ? `#${order?.id ?? sessionId?.slice(-8)}` : ''}
+        </p>
+      </div>
+    </div>
+
     <a
       href="/"
       class="rounded-lg bg-accent px-6 py-2.5 text-sm font-medium text-white hover:bg-accent/90 transition-colors"
     >
-      Continue Shopping
+      Volver a la tienda
     </a>
   </div>
 </StoreLayout>
