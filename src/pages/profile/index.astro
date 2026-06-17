@@ -14,6 +14,31 @@ if (!user) {
 
 const profile = await getServerProfile(supabase)
 const isAdmin = profile?.role === 'admin'
+
+const { data: recentOrders } = await supabase
+  .from('orders')
+  .select('*')
+  .eq('user_id', user.id)
+  .order('created_at', { ascending: false })
+  .limit(5)
+
+function formatPrice(cents: number): string {
+  return '$' + (cents / 100).toFixed(2)
+}
+
+const statusLabels: Record<string, string> = {
+  pending: 'Pendiente',
+  paid: 'Pagado',
+  shipped: 'Enviado',
+  cancelled: 'Cancelado',
+}
+
+const statusColors: Record<string, string> = {
+  pending: 'text-yellow-400',
+  paid: 'text-green-400',
+  shipped: 'text-blue-400',
+  cancelled: 'text-red-400',
+}
 ---
 
 <StoreLayout>
@@ -47,6 +72,33 @@ const isAdmin = profile?.role === 'admin'
         <p class="text-sm mt-1 capitalize">{profile?.role ?? 'customer'}</p>
       </div>
     </div>
+
+    {
+      recentOrders && recentOrders.length > 0 && (
+        <div class="mt-10">
+          <div class="flex items-center justify-between mb-4">
+            <h2 class="font-heading text-lg font-semibold">Pedidos recientes</h2>
+            <a href="/orders" class="text-xs text-accent hover:text-accent/80 transition-colors">Ver todos &rarr;</a>
+          </div>
+          <div class="rounded-lg border border-border divide-y divide-border">
+            {recentOrders.map((order) => (
+              <div class="flex items-center justify-between px-4 py-3 text-sm">
+                <div class="flex items-center gap-3">
+                  <span class="text-xs text-text-muted font-mono">#{order.id}</span>
+                  <span class={`text-xs font-medium ${statusColors[order.status] ?? 'text-text-muted'}`}>
+                    {statusLabels[order.status] ?? order.status}
+                  </span>
+                </div>
+                <div class="flex items-center gap-4">
+                  <span class="text-xs text-text-muted">{new Date(order.created_at).toLocaleDateString('es-ES')}</span>
+                  <span class="font-medium">{formatPrice(order.total)}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )
+    }
 
     <div class="mt-6 flex flex-wrap gap-3">
       {isAdmin && (

@@ -60,3 +60,33 @@ export const PATCH: APIRoute = async ({ params, request }) => {
     return new Response(JSON.stringify({ error: 'Error interno' }), { status: 500, headers })
   }
 }
+
+export const DELETE: APIRoute = async ({ params, request }) => {
+  const headers = new Headers()
+  const serverSupabase = getServerSupabase(request, (name, value, options) => {
+    headers.append('Set-Cookie', serializeCookie(name, value, options))
+  })
+
+  const authError = await checkAdmin(serverSupabase, headers)
+  if (authError) return authError
+
+  const id = Number(params.id)
+  if (!id) {
+    return new Response(JSON.stringify({ error: 'ID inválido' }), { status: 400, headers })
+  }
+
+  try {
+    const { error } = await serverSupabase
+      .from('orders')
+      .delete()
+      .eq('id', id)
+
+    if (error) {
+      return new Response(JSON.stringify({ error: error.message }), { status: 400, headers })
+    }
+
+    return new Response(JSON.stringify({ success: true }), { status: 200, headers })
+  } catch {
+    return new Response(JSON.stringify({ error: 'Error interno' }), { status: 500, headers })
+  }
+}

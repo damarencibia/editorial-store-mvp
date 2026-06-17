@@ -1,10 +1,70 @@
 <template>
   <div>
+    <div class="flex items-center justify-between mb-3">
+      <div class="flex items-center gap-3">
+        <label class="flex items-center gap-2 text-xs text-text-muted cursor-pointer select-none">
+          <input
+            type="checkbox"
+            :checked="isAllSelected"
+            :indeterminate="isIndeterminate"
+            @change="toggleSelectAll"
+            class="rounded border-border bg-surface-3 text-accent focus:ring-accent/30"
+          />
+          Seleccionar todo
+        </label>
+        <span v-if="selectedIds.length > 0" class="text-xs text-text-muted">
+          {{ selectedIds.length }} de {{ rows.length }} seleccionados
+        </span>
+      </div>
+      <div v-if="!showBulkConfirm && selectedIds.length > 0">
+        <button
+          @click="showBulkConfirm = true"
+          class="cursor-pointer flex items-center gap-2 rounded-lg bg-red-500/10 px-3 py-2 text-xs font-medium text-red-400 hover:bg-red-500/20 transition-colors"
+        >
+          <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2m3 0v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6h14" />
+          </svg>
+          Eliminar seleccionados ({{ selectedIds.length }})
+        </button>
+      </div>
+    </div>
+
+    <div v-if="showBulkConfirm" class="rounded-lg border border-red-500/30 bg-red-500/5 px-4 py-3 mb-3 flex items-center justify-between">
+      <p class="text-sm text-red-300">
+        ¿Eliminar <strong>{{ selectedIds.length }} pedido{{ selectedIds.length !== 1 ? 's' : '' }}</strong>? Esta acción no se puede deshacer.
+      </p>
+      <div class="flex items-center gap-2">
+        <button
+          @click="showBulkConfirm = false"
+          class="cursor-pointer rounded-lg border border-border px-3 py-1.5 text-xs text-text-muted hover:text-text-primary transition-colors"
+        >
+          Cancelar
+        </button>
+        <button
+          @click="bulkDelete"
+          :disabled="deletingBulk"
+          class="cursor-pointer rounded-lg bg-red-500 px-3 py-1.5 text-xs font-medium text-white hover:bg-red-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+        >
+          {{ deletingBulk ? 'Eliminando...' : 'Eliminar' }}
+        </button>
+      </div>
+    </div>
+
+    <p v-if="bulkError" class="mb-3 text-xs text-red-400">{{ bulkError }}</p>
+
     <div class="overflow-x-auto rounded-lg border border-border">
       <table class="w-full text-sm">
         <thead>
           <tr class="border-b border-border bg-surface-2">
-            <th class="px-2 py-3 w-8"></th>
+            <th class="px-3 py-3 w-10">
+              <input
+                type="checkbox"
+                :checked="isAllSelected"
+                :indeterminate="isIndeterminate"
+                @change="toggleSelectAll"
+                class="rounded border-border bg-surface-3 text-accent focus:ring-accent/30"
+              />
+            </th>
             <th v-for="col in columns" :key="col.key"
               class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-text-muted select-none cursor-pointer hover:text-text-primary transition-colors"
               @click="toggleSort(col.key)"
@@ -16,62 +76,37 @@
                 </span>
               </span>
             </th>
+            <th class="px-4 py-3 w-28"></th>
           </tr>
         </thead>
         <tbody class="divide-y divide-border">
-          <template v-for="row in sortedRows" :key="row.id">
-            <tr class="hover:bg-surface-2/50 transition-colors">
-              <td class="px-2 py-3 w-8 text-center">
-                <button
-                  v-if="row.items.length > 0"
-                  @click="toggleExpand(row.id)"
-                  class="cursor-pointer text-text-muted hover:text-text-primary transition-colors text-xs"
-                >
-                  {{ expandedId === row.id ? '▲' : '▼' }}
-                </button>
-              </td>
-              <td v-for="col in columns" :key="col.key" class="px-4 py-3 text-text-primary">
-                <span v-if="col.key === 'items_summary'">{{ row[col.key] }}</span>
-                <span v-else-if="col.key === 'status'" v-html="row[col.key]"></span>
-                <span v-else>{{ row[col.key] }}</span>
-              </td>
-            </tr>
-            <tr v-if="expandedId === row.id" class="bg-surface-2/20">
-              <td :colspan="columns.length + 1" class="p-0">
-                <table class="w-full text-xs">
-                  <thead>
-                    <tr class="border-y border-border bg-surface-2/40">
-                      <th class="px-4 py-2 text-left font-semibold text-text-muted uppercase tracking-wider w-14"></th>
-                      <th class="px-4 py-2 text-left font-semibold text-text-muted uppercase tracking-wider">Título</th>
-                      <th class="px-4 py-2 text-left font-semibold text-text-muted uppercase tracking-wider">Autor</th>
-                      <th class="px-4 py-2 text-right font-semibold text-text-muted uppercase tracking-wider">Precio</th>
-                      <th class="px-4 py-2 text-center font-semibold text-text-muted uppercase tracking-wider">Cant.</th>
-                      <th class="px-4 py-2 text-right font-semibold text-text-muted uppercase tracking-wider">Subtotal</th>
-                    </tr>
-                  </thead>
-                  <tbody class="divide-y divide-border/50">
-                    <tr v-for="(item, i) in row.items" :key="i" class="hover:bg-surface-2/40 transition-colors">
-                      <td class="px-4 py-2">
-                        <img
-                          v-if="item.coverUrl"
-                          :src="item.coverUrl"
-                          :alt="item.title"
-                          class="w-10 h-14 object-cover rounded"
-                        />
-                      </td>
-                      <td class="px-4 py-2 text-text-primary font-medium">{{ item.title }}</td>
-                      <td class="px-4 py-2 text-text-muted">{{ item.author }}</td>
-                      <td class="px-4 py-2 text-text-primary text-right">{{ formatPrice(item.price) }}</td>
-                      <td class="px-4 py-2 text-text-primary text-center">{{ item.quantity }}</td>
-                      <td class="px-4 py-2 text-text-primary text-right font-medium">{{ formatPrice(item.price * item.quantity) }}</td>
-                    </tr>
-                  </tbody>
-                </table>
-              </td>
-            </tr>
-          </template>
+          <tr v-for="row in sortedRows" :key="row.id" class="hover:bg-surface-2/50 transition-colors"
+            :class="{ 'bg-accent/5': isSelected(row.id) }"
+          >
+            <td class="px-3 py-3">
+              <input
+                type="checkbox"
+                :checked="isSelected(row.id)"
+                @change="toggleSelect(row.id)"
+                class="rounded border-border bg-surface-3 text-accent focus:ring-accent/30"
+              />
+            </td>
+            <td v-for="col in columns" :key="col.key" class="px-4 py-3 text-text-primary">
+              <span v-if="col.key === 'items_summary'">{{ row[col.key] }}</span>
+              <span v-else-if="col.key === 'status'" v-html="row[col.key]"></span>
+              <span v-else>{{ row[col.key] }}</span>
+            </td>
+            <td class="px-4 py-3">
+              <button
+                @click="openDetail(row.id)"
+                class="cursor-pointer rounded-lg border border-border px-3 py-1.5 text-xs text-text-muted hover:text-text-primary hover:border-border-hover transition-colors"
+              >
+                Ver detalle
+              </button>
+            </td>
+          </tr>
           <tr v-if="rows.length === 0">
-            <td :colspan="columns.length + 1" class="px-4 py-12 text-center text-text-muted">
+            <td :colspan="columns.length + 2" class="px-4 py-12 text-center text-text-muted">
               No hay órdenes registradas.
             </td>
           </tr>
@@ -111,11 +146,19 @@
         </button>
       </div>
     </div>
+
+    <OrderDetailModal
+      :open="detailOrderId !== null"
+      :order="detailOrder"
+      @close="detailOrderId = null"
+      @deleted="onDeleted"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
 import { computed, ref } from 'vue'
+import OrderDetailModal from './OrderDetailModal.vue'
 
 const props = withDefaults(defineProps<{
   orders?: string
@@ -127,6 +170,8 @@ const parsedOrders = computed(() => {
   try { return JSON.parse(props.orders) as any[] }
   catch { return [] }
 })
+
+const rawOrders = computed(() => parsedOrders.value)
 
 const columns = [
   { key: 'customer_email', label: 'Cliente' },
@@ -141,7 +186,49 @@ const perPage = 10
 const page = ref(1)
 const sortKey = ref<string>('created_at')
 const sortDir = ref<'asc' | 'desc'>('desc')
-const expandedId = ref<number | null>(null)
+const detailOrderId = ref<number | null>(null)
+const selectedIds = ref<number[]>([])
+const showBulkConfirm = ref(false)
+const deletingBulk = ref(false)
+const bulkError = ref('')
+
+const detailOrder = computed(() => {
+  if (detailOrderId.value == null) return null
+  return rawOrders.value.find((o: any) => o.id === detailOrderId.value) ?? null
+})
+
+const allIds = computed(() => rows.value.map((r) => r.id))
+
+const isAllSelected = computed(() =>
+  allIds.value.length > 0 && allIds.value.every((id) => selectedIds.value.includes(id))
+)
+
+const isIndeterminate = computed(() =>
+  !isAllSelected.value && allIds.value.some((id) => selectedIds.value.includes(id))
+)
+
+function isSelected(id: number): boolean {
+  return selectedIds.value.includes(id)
+}
+
+function toggleSelect(id: number) {
+  const idx = selectedIds.value.indexOf(id)
+  if (idx === -1) {
+    selectedIds.value.push(id)
+  } else {
+    selectedIds.value.splice(idx, 1)
+  }
+  showBulkConfirm.value = false
+}
+
+function toggleSelectAll() {
+  if (isAllSelected.value) {
+    selectedIds.value = []
+  } else {
+    selectedIds.value = [...allIds.value]
+  }
+  showBulkConfirm.value = false
+}
 
 function formatPrice(cents: number): string {
   return '$' + (cents / 100).toFixed(2)
@@ -199,8 +286,34 @@ const rows = computed(() => {
   return mapped
 })
 
-function toggleExpand(id: number) {
-  expandedId.value = expandedId.value === id ? null : id
+function openDetail(id: number) {
+  detailOrderId.value = id
+}
+
+function onDeleted(id: number) {
+  detailOrderId.value = null
+  window.location.reload()
+}
+
+async function bulkDelete() {
+  if (selectedIds.value.length === 0) return
+  deletingBulk.value = true
+  bulkError.value = ''
+  try {
+    const res = await fetch('/api/admin/orders/bulk-delete', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ids: selectedIds.value }),
+    })
+    if (!res.ok) {
+      const data = await res.json()
+      throw new Error(data.error || 'Error al eliminar')
+    }
+    window.location.reload()
+  } catch (err: any) {
+    bulkError.value = err.message || 'Error de conexión'
+    deletingBulk.value = false
+  }
 }
 
 function toggleSort(key: string) {
