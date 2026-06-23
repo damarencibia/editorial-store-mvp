@@ -54,6 +54,16 @@ const actions = [
   { type: 'link', label: 'Editar', href: '/admin/books/{id}' },
 ]
 
+const searchable = true
+const searchFields = ['title', 'author', 'publisher']
+
+const categories = [...new Set(mappedBooks.map((b: any) => b.category).filter((c: string) => c && c !== '-'))].sort()
+
+const filters = [
+  { key: 'category', label: 'Categoría', options: categories.map((c: string) => ({ value: c, label: c })) },
+  { key: 'is_visible', label: 'Visibilidad', options: [{ value: 'true', label: 'Visibles' }, { value: 'false', label: 'Ocultos' }] },
+]
+
 const selectable = true
 const bulkActions = [
   { action: 'toggle_visibility', label: 'Mostrar/Ocultar' },
@@ -79,6 +89,6 @@ const bulkActions = [
       client:load
       emptyText="No hay libros registrados."
     />
-    <script id="books-data" type="application/json" set:html={JSON.stringify({ columns, rows: mappedBooks, actions, selectable, bulkActions })}></script>
+    <script id="books-data" type="application/json" set:html={JSON.stringify({ columns, rows: mappedBooks, actions, selectable, bulkActions, searchable, searchFields, filters })}></script>
   </div>
 </AdminLayout>

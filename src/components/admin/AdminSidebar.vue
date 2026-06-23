@@ -11,7 +11,7 @@
 
   <aside
     :style="{ width: isDesktop ? desktopWidth + 'px' : '16rem' }"
-    class="fixed lg:static inset-y-0 left-0 z-40 flex flex-col border-r border-border bg-surface-2 transition-all duration-200 overflow-hidden flex-shrink-0"
+    class="fixed lg:static inset-y-0 left-0 z-40 flex flex-col border-r border-border bg-surface-2 overflow-hidden flex-shrink-0"
     :class="[
       isDesktop
         ? 'lg:translate-x-0'
@@ -22,15 +22,16 @@
     ]"
     @mouseenter="onMouseEnter"
     @mouseleave="onMouseLeave"
+    @keydown="onKeydown"
+    role="navigation"
+    aria-label="Admin navigation"
   >
     <!-- Header -->
-    <div
-      class="flex items-center justify-between pt-4 pb-0 px-3"
-    >
+    <div class="flex items-center justify-between pt-4 pb-0 px-3">
       <a
         href="/admin"
         class="flex items-center text-text-primary hover:text-accent transition-colors flex-shrink-0"
-        :class="isDesktop && !isEffectivelyExpanded ? '' : 'gap-2.5'"
+        :class="isDesktop && !isEffectivelyExpanded ? 'w-full justify-center' : 'gap-2.5'"
       >
         <img src="/images/logo.png" alt="Arraigo Editorial"
           class="rounded-full flex-shrink-0"
@@ -42,8 +43,9 @@
       </a>
       <button
         v-if="isDesktop"
+        v-show="isEffectivelyExpanded"
         @click="togglePinned"
-        class="cursor-pointer text-text-muted hover:text-text-primary p-1 flex-shrink-0 transition-all duration-200 rounded-lg hover:bg-surface-3"
+        class="cursor-pointer text-text-muted hover:text-text-primary p-1 flex-shrink-0 transition-colors duration-200 rounded-lg hover:bg-surface-3"
         :title="pinned ? 'Desfijar menú' : 'Fijar menú abierto'"
       >
         <svg
@@ -59,62 +61,59 @@
           class="transition-transform duration-200"
           :class="{ 'rotate-45': pinned }"
         >
-          <circle cx="12" cy="5" r="4"/>
-          <line x1="12" y1="9" x2="12" y2="16"/>
-          <path d="M9 16l3 5 3-5"/>
+          <path d="M16,12V4H17V2H7V4H8V12L6,14V16H11.2V22H12.8V16H18V14L16,12Z" />
         </svg>
       </button>
     </div>
 
     <!-- Navigation -->
-    <nav class="flex flex-col gap-1 flex-1 px-3 pt-6 overflow-y-auto">
+    <nav class="flex flex-col gap-0.5 flex-1 px-3 pt-5 overflow-y-auto">
       <a
-        v-for="item in navItems"
+        v-for="(item, index) in navItems"
         :key="item.href"
         :href="item.href"
         @click="closeMobile"
-        class="flex items-center rounded-lg py-2.5 text-sm transition-colors whitespace-nowrap"
+        class="group relative flex items-center rounded-lg py-2.5 text-sm transition-colors whitespace-nowrap"
         :class="[
           item.match(currentPath)
             ? 'bg-accent/10 text-accent font-medium'
             : 'text-text-muted hover:text-text-primary hover:bg-surface-3',
           isDesktop && !isEffectivelyExpanded ? 'justify-center px-0 gap-0' : 'px-3 gap-3',
         ]"
+        :title="isDesktop && !isEffectivelyExpanded ? item.label : undefined"
+        :tabindex="0"
+        :aria-current="item.match(currentPath) ? 'page' : undefined"
       >
-        <span class="flex-shrink-0 flex items-center justify-center w-5 h-5" v-html="icons[item.icon]"></span>
+        <!-- Active left accent bar -->
         <span
-          v-show="isEffectivelyExpanded || !isDesktop"
-          class="transition-opacity duration-200"
+          v-if="item.match(currentPath)"
+          class="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-5 rounded-r-full bg-accent"
+          :class="isDesktop && !isEffectivelyExpanded ? '' : ''"
+        />
+        <span class="flex-shrink-0 flex items-center justify-center w-5 h-5" v-html="icons[item.icon]"></span>
+        <!-- Label with CSS transition for collapsed/expanded -->
+        <span
+          class="transition-opacity duration-150 overflow-hidden whitespace-nowrap"
+          :class="isDesktop && !isEffectivelyExpanded ? 'opacity-0 pointer-events-none w-0' : 'opacity-100'"
         >
           {{ item.label }}
         </span>
       </a>
     </nav>
 
-    <!-- User section -->
+    <!-- Bottom links -->
     <div class="pt-4 border-t border-border">
-      <div
-        class="flex items-center py-2"
-        :class="isDesktop && !isEffectivelyExpanded ? 'justify-center px-3' : 'px-3 gap-2'"
-      >
-        <div class="flex h-7 w-7 items-center justify-center rounded-full bg-accent/10 text-accent text-xs font-bold uppercase flex-shrink-0">
-          {{ initial }}
-        </div>
-        <div v-show="isEffectivelyExpanded || !isDesktop" class="flex-1 min-w-0">
-          <p class="text-xs font-medium truncate">{{ displayName }}</p>
-          <span class="text-[10px] uppercase tracking-wider text-accent font-semibold">Admin</span>
-        </div>
-      </div>
       <a
         href="/"
         @click="closeMobile"
         class="flex items-center rounded-lg py-2 text-xs transition-colors"
         :class="isDesktop && !isEffectivelyExpanded ? 'justify-center px-3 gap-0' : 'px-3 gap-2'"
+        :title="isDesktop && !isEffectivelyExpanded ? 'Ir a la tienda' : undefined"
       >
         <span class="flex-shrink-0 flex items-center justify-center w-4 h-4" v-html="icons.store"></span>
         <span
-          v-show="isEffectivelyExpanded || !isDesktop"
-          class="text-text-muted hover:text-accent transition-colors"
+          class="transition-opacity duration-150 overflow-hidden whitespace-nowrap"
+          :class="isDesktop && !isEffectivelyExpanded ? 'opacity-0 pointer-events-none w-0' : 'opacity-100'"
         >
           Ir a la tienda
         </span>
@@ -124,13 +123,19 @@
           type="submit"
           class="w-full rounded-lg py-1.5 text-xs text-text-muted hover:text-red-400 hover:bg-red-500/5 transition-colors cursor-pointer flex items-center"
           :class="isDesktop && !isEffectivelyExpanded ? 'justify-center px-3 gap-0' : 'px-3 gap-2'"
+          :title="isDesktop && !isEffectivelyExpanded ? 'Cerrar sesión' : undefined"
         >
           <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0">
             <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/>
             <polyline points="16 17 21 12 16 7"/>
             <line x1="21" y1="12" x2="9" y2="12"/>
           </svg>
-          <span v-show="isEffectivelyExpanded || !isDesktop">Cerrar sesión</span>
+          <span
+            class="transition-opacity duration-150 overflow-hidden whitespace-nowrap"
+            :class="isDesktop && !isEffectivelyExpanded ? 'opacity-0 pointer-events-none w-0' : 'opacity-100'"
+          >
+            Cerrar sesión
+          </span>
         </button>
       </form>
     </div>
@@ -143,7 +148,8 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 const SIDEBAR_EVENT = 'toggle-admin-sidebar'
 const DESKTOP_BREAKPOINT = 1024
 const WIDTH_EXPANDED = 240
-const WIDTH_COLLAPSED = 64
+const WIDTH_COLLAPSED = 72
+const PINNED_STORAGE_KEY = 'admin-sidebar-pinned'
 
 const props = defineProps<{
   currentPath: string
@@ -188,6 +194,9 @@ const navItems = [
 
 function togglePinned() {
   pinned.value = !pinned.value
+  try {
+    localStorage.setItem(PINNED_STORAGE_KEY, String(pinned.value))
+  } catch {}
 }
 
 function onToggleMobile() {
@@ -202,7 +211,9 @@ function onToggleMobile() {
 function closeMobile() {
   if (mobileOpen.value) {
     mobileOpen.value = false
-    document.body.style.overflow = ''
+    setTimeout(() => {
+      document.body.style.overflow = ''
+    }, 250)
   }
 }
 
@@ -218,11 +229,31 @@ function onMouseLeave() {
   }
 }
 
+let resizeTimer: ReturnType<typeof setTimeout> | null = null
+
 function onResize() {
-  isDesktop.value = window.innerWidth >= DESKTOP_BREAKPOINT
-  if (isDesktop.value && mobileOpen.value) {
-    document.body.style.overflow = ''
-    mobileOpen.value = false
+  if (resizeTimer) clearTimeout(resizeTimer)
+  resizeTimer = setTimeout(() => {
+    isDesktop.value = window.innerWidth >= DESKTOP_BREAKPOINT
+    if (isDesktop.value && mobileOpen.value) {
+      document.body.style.overflow = ''
+      mobileOpen.value = false
+    }
+  }, 50)
+}
+
+function onKeydown(e: KeyboardEvent) {
+  if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+    const links = Array.from(
+      (e.currentTarget as HTMLElement).querySelectorAll<HTMLAnchorElement>('nav a[tabindex]')
+    )
+    const currentIdx = links.indexOf(e.target as HTMLAnchorElement)
+    if (currentIdx === -1) return
+    const nextIdx = e.key === 'ArrowDown'
+      ? (currentIdx + 1) % links.length
+      : (currentIdx - 1 + links.length) % links.length
+    e.preventDefault()
+    links[nextIdx]?.focus()
   }
 }
 
@@ -230,6 +261,12 @@ onMounted(() => {
   window.addEventListener(SIDEBAR_EVENT, onToggleMobile)
   window.addEventListener('resize', onResize)
   isDesktop.value = window.innerWidth >= DESKTOP_BREAKPOINT
+  try {
+    const saved = localStorage.getItem(PINNED_STORAGE_KEY)
+    if (saved !== null) {
+      pinned.value = saved === 'true'
+    }
+  } catch {}
 })
 
 onUnmounted(() => {
@@ -247,5 +284,16 @@ onUnmounted(() => {
 .sidebar-backdrop-enter-from,
 .sidebar-backdrop-leave-to {
   opacity: 0;
+}
+
+aside {
+  will-change: width;
+  contain: layout style;
+  transition: width 0.2s ease;
+}
+
+.label-text {
+  overflow: hidden;
+  white-space: nowrap;
 }
 </style>

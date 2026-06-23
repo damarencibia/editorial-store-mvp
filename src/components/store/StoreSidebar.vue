@@ -33,13 +33,12 @@
             v-if="!auth.loading && auth.profile?.role === 'admin'"
             href="/admin"
             @click="close"
-            class="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-accent bg-accent/10 hover:bg-accent/20 transition-colors"
+            class="admin-link flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-amber-400 bg-amber-400/10 hover:bg-amber-400/20 transition-colors"
           >
             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-              <path d="M7 11V7a5 5 0 0110 0v4" />
+              <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z" />
             </svg>
-            Admin Panel
+            Administrar
           </a>
 
           <a
@@ -196,5 +195,9 @@ onUnmounted(() => {
 .sidebar-panel-enter-from,
 .sidebar-panel-leave-to {
   transform: translateX(-100%);
+}
+
+.admin-link {
+  position: relative;
 }
 </style>

@@ -4,6 +4,33 @@
   </div>
   <template v-else>
     <div>
+      <!-- Search + Filters bar -->
+      <div v-if="searchable || filters.length > 0" class="flex flex-wrap items-center gap-3 mb-4">
+        <div v-if="searchable" class="relative flex-1 min-w-[200px] max-w-sm">
+          <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted pointer-events-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8" />
+            <path d="m21 21-4.35-4.35" />
+          </svg>
+          <input
+            v-model="searchText"
+            type="text"
+            placeholder="Buscar..."
+            class="w-full rounded-lg border border-border bg-surface-3 pl-9 pr-4 py-2 text-sm text-text-primary placeholder-text-dim transition-colors focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent/30"
+          />
+        </div>
+        <select
+          v-for="filter in filters"
+          :key="filter.key"
+          v-model="activeFilters[filter.key]"
+          class="rounded-lg border border-border bg-surface-3 px-3 py-2 text-sm text-text-primary focus:outline-none focus:border-accent transition-colors"
+        >
+          <option value="">{{ filter.label }}: Tod{{ filter.options?.[0]?.label?.endsWith('a') ? 'a' : 'o' }}s</option>
+          <option v-for="opt in filter.options" :key="opt.value" :value="opt.value">
+            {{ opt.label }}
+          </option>
+        </select>
+      </div>
+
       <div v-if="resultMessage" :class="[
         'mb-4 px-4 py-3 rounded-lg text-sm border transition-all',
         resultType === 'success'
@@ -124,9 +151,9 @@
                 </div>
               </td>
             </tr>
-            <tr v-if="rows.length === 0">
+            <tr v-if="sortedRows.length === 0">
               <td :colspan="columnCount" class="px-4 py-12 text-center text-text-muted">
-                {{ emptyText }}
+                {{ rows.length === 0 ? emptyText : 'Ningún resultado coincide con los filtros.' }}
               </td>
             </tr>
           </tbody>
@@ -135,7 +162,7 @@
 
       <div v-if="totalPages > 1" class="flex items-center justify-between mt-4">
         <p class="text-xs text-text-muted">
-          {{ (page - 1) * perPage + 1 }}-{{ Math.min(page * perPage, rows.length) }} de {{ rows.length }}
+          {{ (page - 1) * perPage + 1 }}-{{ Math.min(page * perPage, filteredRows.length) }} de {{ filteredRows.length }}
         </p>
         <div class="flex items-center gap-2">
           <button
@@ -282,6 +309,17 @@ interface BulkAction {
   variant?: 'primary' | 'danger'
 }
 
+interface FilterOption {
+  value: string
+  label: string
+}
+
+interface FilterConfig {
+  key: string
+  label: string
+  options: FilterOption[]
+}
+
 const props = withDefaults(defineProps<{
   columns?: Column[]
   rows?: Record<string, any>[]
@@ -318,6 +356,15 @@ const selectable = ref(false)
 const bulkActions = ref<BulkAction[]>([])
 const selectedIds = ref<Set<number>>(new Set())
 
+const searchable = ref(false)
+const searchFields = ref<string[]>([])
+const searchText = ref('')
+const filters = ref<FilterConfig[]>([])
+const activeFilters = ref<Record<string, string>>({})
+
+watch(searchText, () => { page.value = 1 })
+watch(activeFilters, () => { page.value = 1 }, { deep: true })
+
 watch(() => props.columns, (val) => {
   if (val !== undefined) columns.value = val
 }, { immediate: true })
@@ -335,8 +382,46 @@ onMounted(() => {
     if (data.actions) actions.value = data.actions
     if (data.selectable !== undefined) selectable.value = data.selectable
     if (data.bulkActions) bulkActions.value = data.bulkActions
+    if (data.searchable !== undefined) searchable.value = data.searchable
+    if (data.searchFields) searchFields.value = data.searchFields
+    if (data.filters) {
+      filters.value = data.filters
+      const init: Record<string, string> = {}
+      for (const f of data.filters) {
+        init[f.key] = ''
+      }
+      activeFilters.value = init
+    }
   }
   loaded.value = true
+})
+
+const filteredRows = computed(() => {
+  let items = rows.value
+
+  if (searchText.value && searchFields.value.length > 0) {
+    const q = searchText.value.toLowerCase()
+    items = items.filter(row =>
+      searchFields.value.some(field => {
+        const val = row[field]
+        return val != null && String(val).toLowerCase().includes(q)
+      })
+    )
+  }
+
+  for (const filter of filters.value) {
+    const active = activeFilters.value[filter.key]
+    if (active) {
+      items = items.filter(row => {
+        const val = row[filter.key]
+        if (active === 'true') return val === true || val === 'true'
+        if (active === 'false') return val === false || val === 'false'
+        return String(val ?? '') === active
+      })
+    }
+  }
+
+  return items
 })
 
 const page = ref(1)
@@ -353,7 +438,7 @@ function toggleSort(key: string) {
 }
 
 const sortedRows = computed(() => {
-  const items = [...rows.value]
+  const items = [...filteredRows.value]
   if (sortKey.value) {
     items.sort((a, b) => {
       const aVal = a[sortKey.value]
@@ -368,7 +453,7 @@ const sortedRows = computed(() => {
   return items.slice(start, start + props.perPage)
 })
 
-const totalPages = computed(() => Math.ceil(rows.value.length / props.perPage))
+const totalPages = computed(() => Math.ceil(filteredRows.value.length / props.perPage))
 
 const visiblePages = computed(() => {
   const total = totalPages.value

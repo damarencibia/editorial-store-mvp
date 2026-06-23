@@ -52,6 +52,44 @@
 
     <p v-if="bulkError" class="mb-3 text-xs text-red-400">{{ bulkError }}</p>
 
+    <!-- Filters bar -->
+    <div class="flex flex-wrap items-center gap-3 mb-4">
+      <div class="relative flex-1 min-w-[200px] max-w-sm">
+        <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted pointer-events-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="11" cy="11" r="8" />
+          <path d="m21 21-4.35-4.35" />
+        </svg>
+        <input
+          v-model="searchText"
+          type="text"
+          placeholder="Buscar por email o ID..."
+          class="w-full rounded-lg border border-border bg-surface-3 pl-9 pr-4 py-2 text-sm text-text-primary placeholder-text-dim transition-colors focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent/30"
+        />
+      </div>
+      <select
+        v-model="statusFilter"
+        class="rounded-lg border border-border bg-surface-3 px-3 py-2 text-sm text-text-primary focus:outline-none focus:border-accent transition-colors"
+      >
+        <option value="">Estado: Todos</option>
+        <option value="pending">Pendiente</option>
+        <option value="paid">Pagado</option>
+        <option value="shipped">Enviado</option>
+        <option value="cancelled">Cancelado</option>
+      </select>
+      <input
+        v-model="dateFrom"
+        type="date"
+        class="rounded-lg border border-border bg-surface-3 px-3 py-2 text-sm text-text-primary focus:outline-none focus:border-accent transition-colors"
+        title="Desde"
+      />
+      <input
+        v-model="dateTo"
+        type="date"
+        class="rounded-lg border border-border bg-surface-3 px-3 py-2 text-sm text-text-primary focus:outline-none focus:border-accent transition-colors"
+        title="Hasta"
+      />
+    </div>
+
     <div class="overflow-x-auto rounded-lg border border-border">
       <table class="w-full text-sm">
         <thead>
@@ -105,9 +143,9 @@
               </button>
             </td>
           </tr>
-          <tr v-if="rows.length === 0">
+          <tr v-if="sortedRows.length === 0">
             <td :colspan="columns.length + 2" class="px-4 py-12 text-center text-text-muted">
-              No hay órdenes registradas.
+              {{ rawOrders.length === 0 ? 'No hay órdenes registradas.' : 'Ninguna orden coincide con los filtros.' }}
             </td>
           </tr>
         </tbody>
@@ -116,7 +154,7 @@
 
     <div v-if="totalPages > 1" class="flex items-center justify-between mt-4">
       <p class="text-xs text-text-muted">
-        {{ (page - 1) * perPage + 1 }}-{{ Math.min(page * perPage, rows.length) }} de {{ rows.length }}
+        {{ (page - 1) * perPage + 1 }}-{{ Math.min(page * perPage, filteredRows.length) }} de {{ filteredRows.length }}
       </p>
       <div class="flex items-center gap-2">
         <button
@@ -157,7 +195,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import OrderDetailModal from './OrderDetailModal.vue'
 
 const props = withDefaults(defineProps<{
@@ -192,12 +230,49 @@ const showBulkConfirm = ref(false)
 const deletingBulk = ref(false)
 const bulkError = ref('')
 
+const searchText = ref('')
+const statusFilter = ref('')
+const dateFrom = ref('')
+const dateTo = ref('')
+
+watch([searchText, statusFilter, dateFrom, dateTo], () => { page.value = 1 })
+
 const detailOrder = computed(() => {
   if (detailOrderId.value == null) return null
   return rawOrders.value.find((o: any) => o.id === detailOrderId.value) ?? null
 })
 
-const allIds = computed(() => rows.value.map((r) => r.id))
+const filteredRows = computed(() => {
+  let items = rows.value
+
+  if (searchText.value) {
+    const q = searchText.value.toLowerCase()
+    items = items.filter(row =>
+      String(row.customer_email).toLowerCase().includes(q) ||
+      String(row.id).includes(q)
+    )
+  }
+
+  if (statusFilter.value) {
+    items = items.filter(row => row._status === statusFilter.value)
+  }
+
+  if (dateFrom.value) {
+    const from = new Date(dateFrom.value)
+    from.setHours(0, 0, 0, 0)
+    items = items.filter(row => new Date(row._created_at) >= from)
+  }
+
+  if (dateTo.value) {
+    const to = new Date(dateTo.value)
+    to.setHours(23, 59, 59, 999)
+    items = items.filter(row => new Date(row._created_at) <= to)
+  }
+
+  return items
+})
+
+const allIds = computed(() => filteredRows.value.map((r) => r.id))
 
 const isAllSelected = computed(() =>
   allIds.value.length > 0 && allIds.value.every((id) => selectedIds.value.includes(id))
@@ -326,7 +401,7 @@ function toggleSort(key: string) {
 }
 
 const sortedRows = computed(() => {
-  const items = [...rows.value]
+  const items = [...filteredRows.value]
   if (sortKey.value) {
     const field = sortKey.value === 'total' ? '_total'
       : sortKey.value === 'created_at' ? '_created_at'
@@ -346,7 +421,7 @@ const sortedRows = computed(() => {
   return items.slice(start, start + perPage)
 })
 
-const totalPages = computed(() => Math.ceil(rows.value.length / perPage))
+const totalPages = computed(() => Math.ceil(filteredRows.value.length / perPage))
 
 const visiblePages = computed(() => {
   const total = totalPages.value

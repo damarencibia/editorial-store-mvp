@@ -1,4 +1,36 @@
 <template>
+  <!-- Filters bar -->
+  <div class="flex flex-wrap items-center gap-3 mb-4">
+    <div class="relative flex-1 min-w-[200px] max-w-sm">
+      <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted pointer-events-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="11" cy="11" r="8" />
+        <path d="m21 21-4.35-4.35" />
+      </svg>
+      <input
+        v-model="searchText"
+        type="text"
+        placeholder="Buscar por email o nombre..."
+        class="w-full rounded-lg border border-border bg-surface-3 pl-9 pr-4 py-2 text-sm text-text-primary placeholder-text-dim transition-colors focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent/30"
+      />
+    </div>
+    <select
+      v-model="roleFilter"
+      class="rounded-lg border border-border bg-surface-3 px-3 py-2 text-sm text-text-primary focus:outline-none focus:border-accent transition-colors"
+    >
+      <option value="">Rol: Todos</option>
+      <option value="admin">Admin</option>
+      <option value="customer">Cliente</option>
+    </select>
+    <select
+      v-model="statusFilter"
+      class="rounded-lg border border-border bg-surface-3 px-3 py-2 text-sm text-text-primary focus:outline-none focus:border-accent transition-colors"
+    >
+      <option value="">Estado: Todos</option>
+      <option value="active">Activo</option>
+      <option value="frozen">Congelado</option>
+    </select>
+  </div>
+
   <div class="overflow-x-auto rounded-lg border border-border">
     <table class="w-full text-sm">
       <thead>
@@ -76,9 +108,9 @@
             </div>
           </td>
         </tr>
-        <tr v-if="customers.length === 0">
+        <tr v-if="sortedRows.length === 0">
           <td :colspan="columns.length + 1" class="px-4 py-12 text-center text-text-muted">
-            No hay clientes registrados.
+            {{ customers.length === 0 ? 'No hay clientes registrados.' : 'Ningún cliente coincide con los filtros.' }}
           </td>
         </tr>
       </tbody>
@@ -87,7 +119,7 @@
 
   <div v-if="totalPages > 1" class="flex items-center justify-between mt-4">
     <p class="text-xs text-text-muted">
-      {{ (page - 1) * perPage + 1 }}-{{ Math.min(page * perPage, customers.length) }} de {{ customers.length }}
+      {{ (page - 1) * perPage + 1 }}-{{ Math.min(page * perPage, filteredRows.length) }} de {{ filteredRows.length }}
     </p>
     <div class="flex items-center gap-2">
       <button
@@ -199,7 +231,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 
 interface Customer {
   id: string
@@ -227,6 +259,12 @@ const perPage = 10
 const sortKey = ref<string>('created_at')
 const sortDir = ref<'asc' | 'desc'>('desc')
 const openDropdownId = ref<string | null>(null)
+
+const searchText = ref('')
+const roleFilter = ref('')
+const statusFilter = ref('')
+
+watch([searchText, roleFilter, statusFilter], () => { page.value = 1 })
 
 const roleModal = ref<Customer | null>(null)
 const roleModalValue = ref<string>('customer')
@@ -257,8 +295,32 @@ function toggleSort(key: string) {
   }
 }
 
+const filteredRows = computed(() => {
+  let items = [...props.customers]
+
+  if (searchText.value) {
+    const q = searchText.value.toLowerCase()
+    items = items.filter(row =>
+      (row.email && row.email.toLowerCase().includes(q)) ||
+      (row.full_name && row.full_name.toLowerCase().includes(q))
+    )
+  }
+
+  if (roleFilter.value) {
+    items = items.filter(row => row.role === roleFilter.value)
+  }
+
+  if (statusFilter.value === 'active') {
+    items = items.filter(row => !row.frozen)
+  } else if (statusFilter.value === 'frozen') {
+    items = items.filter(row => row.frozen)
+  }
+
+  return items
+})
+
 const sortedRows = computed(() => {
-  const items = [...props.customers]
+  const items = [...filteredRows.value]
   if (sortKey.value) {
     items.sort((a, b) => {
       const aVal = (a as any)[sortKey.value]
@@ -273,7 +335,7 @@ const sortedRows = computed(() => {
   return items.slice(start, start + perPage)
 })
 
-const totalPages = computed(() => Math.ceil(props.customers.length / perPage))
+const totalPages = computed(() => Math.ceil(filteredRows.value.length / perPage))
 
 const visiblePages = computed(() => {
   const total = totalPages.value

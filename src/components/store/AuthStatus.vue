@@ -3,7 +3,8 @@
     <template v-if="auth.user">
       <a
         href="/profile"
-        class="flex h-8 w-8 items-center justify-center rounded-full bg-accent/10 text-accent text-sm font-bold uppercase ring-2 ring-border hover:ring-accent/30 transition-all"
+        class="flex h-8 w-8 items-center justify-center rounded-full bg-accent/10 text-accent text-sm font-bold uppercase transition-all"
+        :class="auth.profile?.role === 'admin' ? 'ring-2 ring-amber-400 shadow-[0_0_10px_rgba(251,191,36,0.5)]' : 'ring-2 ring-border hover:ring-accent/30'"
       >
         {{ auth.user.email?.charAt(0) ?? '?' }}
       </a>
