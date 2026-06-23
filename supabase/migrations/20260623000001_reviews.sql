@@ -20,28 +20,28 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_reviews_book_user ON public.reviews(book_i
 ALTER TABLE public.reviews ENABLE ROW LEVEL SECURITY;
 
 -- 3. RLS policies
-CREATE POLICY "Reviews are publicly readable"
+CREATE POLICY IF NOT EXISTS "Reviews are publicly readable"
   ON public.reviews FOR SELECT
   USING (true);
 
-CREATE POLICY "Users can insert own review"
+CREATE POLICY IF NOT EXISTS "Users can insert own review"
   ON public.reviews FOR INSERT
   WITH CHECK (auth.role() = 'authenticated' AND auth.uid() = user_id);
 
-CREATE POLICY "Users can update own review"
+CREATE POLICY IF NOT EXISTS "Users can update own review"
   ON public.reviews FOR UPDATE
   USING (auth.uid() = user_id)
   WITH CHECK (auth.uid() = user_id);
 
-CREATE POLICY "Users can delete own review"
+CREATE POLICY IF NOT EXISTS "Users can delete own review"
   ON public.reviews FOR DELETE
   USING (auth.uid() = user_id);
 
-CREATE POLICY "Admins can update any review"
+CREATE POLICY IF NOT EXISTS "Admins can update any review"
   ON public.reviews FOR UPDATE
   USING (public.is_admin());
 
-CREATE POLICY "Admins can delete any review"
+CREATE POLICY IF NOT EXISTS "Admins can delete any review"
   ON public.reviews FOR DELETE
   USING (public.is_admin());
 
