@@ -37,7 +37,7 @@ const { data: trending } = await supabase
       </section>
     )}
 
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
       {(collections ?? []).length === 0 && (
         <p class="col-span-full text-center py-16 text-text-muted">
           No hay colecciones disponibles.
@@ -52,22 +52,19 @@ const { data: trending } = await supabase
             class="group block rounded-xl border border-border bg-surface-2 overflow-hidden hover:border-accent/40 transition-all duration-200"
           >
             {col.cover_url && (
-              <div class="aspect-[3/1] overflow-hidden">
+              <div class="aspect-[3/4] bg-surface-1 flex items-center justify-center p-4 m-3 border-2 border-border/80 rounded-sm shadow-[0_2px_8px_rgba(0,0,0,0.15)]">
                 <img
                   src={col.cover_url}
                   alt={col.name}
-                  class="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300"
+                  class="h-full w-full object-contain group-hover:scale-105 transition-transform duration-300"
                 />
               </div>
             )}
-            <div class={col.cover_url ? 'p-4' : 'p-5'}>
-              <h2 class="font-heading text-lg font-semibold text-text-primary group-hover:text-accent transition-colors">
+            <div class="p-3 text-center">
+              <h3 class="font-heading text-sm font-semibold text-text-primary group-hover:text-accent transition-colors">
                 {col.name}
-              </h2>
-              {col.description && (
-                <p class="mt-1 text-sm text-text-muted line-clamp-2">{col.description}</p>
-              )}
-              <p class="mt-3 text-xs text-text-dim">{count} {count === 1 ? 'categoría' : 'categorías'}</p>
+              </h3>
+              <p class="mt-1 text-xs text-text-dim">{count} {count === 1 ? 'categoría' : 'categorías'}</p>
             </div>
           </a>
         )

@@ -11,56 +11,268 @@ const profile = await getServerProfile(supabase)
 if (!profile || profile.role !== 'admin') return Astro.redirect('/')
 
 const { count: bookCount } = await supabase.from('books').select('*', { count: 'exact', head: true })
-const { count: orderCount } = await supabase.from('orders').select('*', { count: 'exact', head: true })
 const { count: customerCount } = await supabase.from('profiles').select('*', { count: 'exact', head: true })
 
 const { data: reviewStats } = await supabaseAdmin.rpc('get_review_stats')
 const reviewCount = reviewStats?.[0]?.total_reviews ?? 0
 const reviewAvg = reviewStats?.[0]?.avg_rating ?? 0
-const reviewBytes = reviewStats?.[0]?.total_bytes ?? 0
-const reviewSize = reviewBytes > 1_048_576
-  ? (reviewBytes / 1_048_576).toFixed(2) + ' MB'
-  : (reviewBytes / 1024).toFixed(2) + ' KB'
 
 const { data: paidOrders } = await supabase
   .from('orders')
-  .select('total')
+  .select('total, created_at')
   .eq('status', 'paid')
 
 const totalSales = (paidOrders ?? []).reduce((sum, o) => sum + (o.total ?? 0), 0)
+const avgOrder = (paidOrders ?? []).length > 0 ? totalSales / paidOrders.length : 0
+
+const now = new Date()
+const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString()
+const salesThisMonth = (paidOrders ?? [])
+  .filter(o => o.created_at >= startOfMonth)
+  .reduce((sum, o) => sum + (o.total ?? 0), 0)
+
+const { data: ordersByStatus } = await supabase
+  .from('orders')
+  .select('status', { count: 'exact', head: false })
+const pendingCount = (ordersByStatus ?? []).filter(o => o.status === 'pending').length
+const paidCount = (ordersByStatus ?? []).filter(o => o.status === 'paid').length
+const shippedCount = (ordersByStatus ?? []).filter(o => o.status === 'shipped').length
+const cancelledCount = (ordersByStatus ?? []).filter(o => o.status === 'cancelled').length
+const orderCount = (ordersByStatus ?? []).length
+
+const { data: topBooks } = await supabase
+  .from('books')
+  .select('id, title, cover_url, sales_count')
+  .order('sales_count', { ascending: false })
+  .limit(5)
+
+const { data: recentOrders } = await supabase
+  .from('orders')
+  .select('id, customer_email, total, status, created_at')
+  .order('created_at', { ascending: false })
+  .limit(5)
+
+const statusLabels: Record<string, string> = {
+  pending: 'Pendiente',
+  paid: 'Pagado',
+  shipped: 'Enviado',
+  cancelled: 'Cancelado',
+}
+
+function formatPrice(cents: number): string {
+  return '$' + (cents / 100).toFixed(2)
+}
+
+function formatDate(date: string): string {
+  return new Date(date).toLocaleDateString('es-ES', {
+    day: 'numeric',
+    month: 'short',
+  })
+}
 ---
 
 <AdminLayout>
   <title>Dashboard — Admin</title>
 
   <div class="max-w-5xl">
-    <h1 class="font-heading text-2xl font-bold tracking-tight mb-8">Dashboard</h1>
+    <div class="flex items-center justify-between mb-8">
+      <h1 class="font-heading text-2xl font-bold tracking-tight">Dashboard</h1>
+      <p class="text-xs text-text-muted">{new Date().toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}</p>
+    </div>
 
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-      <div class="rounded-lg border border-border bg-surface-2 p-4">
-        <p class="text-xs text-text-muted uppercase tracking-wider font-semibold">Ventas totales</p>
-        <p class="font-heading text-2xl font-bold mt-1">${(totalSales / 100).toFixed(2)}</p>
-        <p class="text-xs text-text-dim mt-1">{paidOrders?.length ?? 0} órdenes pagadas</p>
+    <!-- Sección 1: Resumen financiero -->
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+      <div class="rounded-lg border border-border bg-surface-2 p-5 relative overflow-hidden">
+        <div class="absolute top-0 right-0 w-24 h-24 bg-green-500/5 rounded-full -translate-y-8 translate-x-8"></div>
+        <div class="flex items-center gap-3 mb-3">
+          <div class="flex h-9 w-9 items-center justify-center rounded-lg bg-green-500/10 text-green-400">
+            <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+            </svg>
+          </div>
+          <p class="text-xs text-text-muted uppercase tracking-wider font-semibold">Ingresos totales</p>
+        </div>
+        <p class="font-heading text-3xl font-bold text-green-400">{formatPrice(totalSales)}</p>
+        <p class="text-xs text-text-dim mt-1.5">{paidCount} órdenes pagadas</p>
       </div>
-      <div class="rounded-lg border border-border bg-surface-2 p-4">
-        <p class="text-xs text-text-muted uppercase tracking-wider font-semibold">Órdenes</p>
-        <p class="font-heading text-2xl font-bold mt-1">{orderCount ?? 0}</p>
-      </div>
-      <div class="rounded-lg border border-border bg-surface-2 p-4">
-        <p class="text-xs text-text-muted uppercase tracking-wider font-semibold">Clientes</p>
-        <p class="font-heading text-2xl font-bold mt-1">{customerCount ?? 0}</p>
-      </div>
-      <div class="rounded-lg border border-border bg-surface-2 p-4">
-        <p class="text-xs text-text-muted uppercase tracking-wider font-semibold">Libros</p>
-        <p class="font-heading text-2xl font-bold mt-1">{bookCount ?? 0}</p>
-      </div>
-      <div class="rounded-lg border border-border bg-surface-2 p-4">
-        <p class="text-xs text-text-muted uppercase tracking-wider font-semibold">Reseñas</p>
-        <p class="font-heading text-2xl font-bold mt-1">{reviewCount}</p>
-        <p class="text-xs text-text-dim mt-1">
-          {reviewAvg > 0 ? `${Number(reviewAvg).toFixed(1)} ⭐ promedio` : 'Sin reseñas'}
+
+      <div class="rounded-lg border border-border bg-surface-2 p-5 relative overflow-hidden">
+        <div class="absolute top-0 right-0 w-24 h-24 bg-accent/5 rounded-full -translate-y-8 translate-x-8"></div>
+        <div class="flex items-center gap-3 mb-3">
+          <div class="flex h-9 w-9 items-center justify-center rounded-lg bg-accent/10 text-accent">
+            <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="22 12 16 12 14 15 10 15 8 12 2 12" />
+              <path d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z" />
+            </svg>
+          </div>
+          <p class="text-xs text-text-muted uppercase tracking-wider font-semibold">Este mes</p>
+        </div>
+        <p class="font-heading text-3xl font-bold">{formatPrice(salesThisMonth)}</p>
+        <p class="text-xs text-text-dim mt-1.5">
+          {salesThisMonth > 0 ? `${((salesThisMonth / totalSales) * 100).toFixed(0)}% del total` : 'Sin ventas este mes'}
         </p>
-        <p class="text-xs text-text-dim">{reviewSize} ocupados</p>
+      </div>
+
+      <div class="rounded-lg border border-border bg-surface-2 p-5 relative overflow-hidden">
+        <div class="absolute top-0 right-0 w-24 h-24 bg-blue-500/5 rounded-full -translate-y-8 translate-x-8"></div>
+        <div class="flex items-center gap-3 mb-3">
+          <div class="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-500/10 text-blue-400">
+            <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 2a3 3 0 1 0 0 6 3 3 0 0 0 0-6z" />
+              <path d="M12 8c-2.5 0-8 1.5-8 5v3h16v-3c0-3.5-5.5-5-8-5z" />
+            </svg>
+          </div>
+          <p class="text-xs text-text-muted uppercase tracking-wider font-semibold">Pedido promedio</p>
+        </div>
+        <p class="font-heading text-3xl font-bold text-blue-400">{formatPrice(avgOrder)}</p>
+        <p class="text-xs text-text-dim mt-1.5">{customerCount} clientes registrados</p>
+      </div>
+    </div>
+
+    <!-- Sección 2: Estado de órdenes -->
+    <div class="mb-8">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="font-heading text-base font-semibold">Órdenes</h2>
+        <a href="/admin/orders" class="text-xs text-accent hover:text-accent/80 transition-colors">Ver todas &rarr;</a>
+      </div>
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <div class="rounded-lg border border-border bg-surface-2 p-4 flex items-center gap-3">
+          <span class="inline-flex h-8 w-8 items-center justify-center rounded-full bg-yellow-400/10 text-yellow-400 text-xs font-bold">{pendingCount}</span>
+          <div>
+            <p class="text-xs font-medium text-yellow-400">Pendientes</p>
+            <p class="text-[11px] text-text-dim">{pendingCount === 1 ? '1 orden' : `${pendingCount} órdenes`}</p>
+          </div>
+        </div>
+        <div class="rounded-lg border border-border bg-surface-2 p-4 flex items-center gap-3">
+          <span class="inline-flex h-8 w-8 items-center justify-center rounded-full bg-green-400/10 text-green-400 text-xs font-bold">{paidCount}</span>
+          <div>
+            <p class="text-xs font-medium text-green-400">Pagadas</p>
+            <p class="text-[11px] text-text-dim">{paidCount === 1 ? '1 orden' : `${paidCount} órdenes`}</p>
+          </div>
+        </div>
+        <div class="rounded-lg border border-border bg-surface-2 p-4 flex items-center gap-3">
+          <span class="inline-flex h-8 w-8 items-center justify-center rounded-full bg-blue-400/10 text-blue-400 text-xs font-bold">{shippedCount}</span>
+          <div>
+            <p class="text-xs font-medium text-blue-400">Enviadas</p>
+            <p class="text-[11px] text-text-dim">{shippedCount === 1 ? '1 orden' : `${shippedCount} órdenes`}</p>
+          </div>
+        </div>
+        <div class="rounded-lg border border-border bg-surface-2 p-4 flex items-center gap-3">
+          <span class="inline-flex h-8 w-8 items-center justify-center rounded-full bg-red-400/10 text-red-400 text-xs font-bold">{cancelledCount}</span>
+          <div>
+            <p class="text-xs font-medium text-red-400">Canceladas</p>
+            <p class="text-[11px] text-text-dim">{cancelledCount === 1 ? '1 orden' : `${cancelledCount} órdenes`}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sección 3: Top libros + Últimas órdenes -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+      <div>
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="font-heading text-base font-semibold">Libros más vendidos</h2>
+          <a href="/admin/books" class="text-xs text-accent hover:text-accent/80 transition-colors">Ver todos &rarr;</a>
+        </div>
+        <div class="rounded-lg border border-border divide-y divide-border">
+          {topBooks && topBooks.length > 0 ? topBooks.map((b, i) => (
+            <div class="flex items-center gap-3 px-4 py-3">
+              <span class="w-5 text-xs font-bold text-text-muted text-center">{i + 1}</span>
+              <img
+                src={b.cover_url}
+                alt={b.title}
+                class="w-8 h-11 rounded object-cover flex-shrink-0"
+                onerror="this.style.display='none'"
+              />
+              <span class="text-sm text-text-primary flex-1 min-w-0 truncate">{b.title}</span>
+              <span class="text-xs text-text-muted font-mono whitespace-nowrap">{b.sales_count} venta{b.sales_count !== 1 ? 's' : ''}</span>
+            </div>
+          )) : (
+            <div class="px-4 py-8 text-center text-sm text-text-muted">Sin ventas aún.</div>
+          )}
+        </div>
+      </div>
+
+      <div>
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="font-heading text-base font-semibold">Últimas órdenes</h2>
+          <a href="/admin/orders" class="text-xs text-accent hover:text-accent/80 transition-colors">Ver todas &rarr;</a>
+        </div>
+        <div class="rounded-lg border border-border divide-y divide-border">
+          {recentOrders && recentOrders.length > 0 ? recentOrders.map(o => {
+            const statusColor = {
+              pending: 'text-yellow-400 bg-yellow-400/10',
+              paid: 'text-green-400 bg-green-400/10',
+              shipped: 'text-blue-400 bg-blue-400/10',
+              cancelled: 'text-red-400 bg-red-400/10',
+            }
+            const cls = statusColor[o.status] || 'text-text-muted bg-surface-2'
+            return (
+              <div class="flex items-center justify-between px-4 py-3">
+                <div class="flex items-center gap-3 min-w-0">
+                  <span class="text-xs text-text-muted font-mono shrink-0">#{o.id}</span>
+                  <span class="text-sm text-text-primary truncate">{o.customer_email || '—'}</span>
+                </div>
+                <div class="flex items-center gap-3 shrink-0">
+                  <span class={`inline-block rounded-full px-2 py-0.5 text-[11px] font-medium ${cls}`}>
+                    {statusLabels[o.status] || o.status}
+                  </span>
+                  <span class="text-sm font-medium font-mono">{formatPrice(o.total)}</span>
+                  <span class="text-[11px] text-text-dim hidden sm:inline">{formatDate(o.created_at)}</span>
+                </div>
+              </div>
+            )
+          }) : (
+            <div class="px-4 py-8 text-center text-sm text-text-muted">Sin órdenes aún.</div>
+          )}
+        </div>
+      </div>
+    </div>
+
+    <!-- Sección 4: Resumen inferior -->
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+      <div class="rounded-lg border border-border bg-surface-2 p-4 text-center">
+        <p class="font-heading text-2xl font-bold">{bookCount ?? 0}</p>
+        <p class="text-xs text-text-muted mt-1">Libros</p>
+        <a href="/admin/books" class="text-[11px] text-accent hover:text-accent/80 transition-colors mt-2 inline-block">Gestionar</a>
+      </div>
+      <div class="rounded-lg border border-border bg-surface-2 p-4 text-center">
+        <p class="font-heading text-2xl font-bold">{customerCount ?? 0}</p>
+        <p class="text-xs text-text-muted mt-1">Clientes</p>
+        <a href="/admin/customers" class="text-[11px] text-accent hover:text-accent/80 transition-colors mt-2 inline-block">Gestionar</a>
+      </div>
+      <div class="rounded-lg border border-border bg-surface-2 p-4 text-center">
+        <p class="font-heading text-2xl font-bold">{reviewCount}</p>
+        <p class="text-xs text-text-muted mt-1">Reseñas</p>
+        <p class="text-[11px] text-text-dim mt-2">{reviewAvg > 0 ? `${Number(reviewAvg).toFixed(1)} ⭐` : '—'}</p>
+      </div>
+      <div class="rounded-lg border border-border bg-surface-2 p-4 text-center">
+        <p class="font-heading text-2xl font-bold">{orderCount}</p>
+        <p class="text-xs text-text-muted mt-1">Órdenes totales</p>
+        <a href="/admin/orders" class="text-[11px] text-accent hover:text-accent/80 transition-colors mt-2 inline-block">Gestionar</a>
+      </div>
+    </div>
+
+    <!-- Sección 5: Atajos -->
+    <div class="mt-8 pt-6 border-t border-border">
+      <h2 class="font-heading text-sm font-semibold text-text-muted mb-4">Atajos rápidos</h2>
+      <div class="flex flex-wrap gap-3">
+        <a href="/admin/books/new" class="inline-flex items-center gap-2 rounded-lg bg-accent/10 px-4 py-2.5 text-sm font-medium text-accent hover:bg-accent/20 transition-colors">
+          <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14" /></svg>
+          Nuevo libro
+        </a>
+        <a href="/admin/orders?status=pending" class="inline-flex items-center gap-2 rounded-lg bg-yellow-400/10 px-4 py-2.5 text-sm font-medium text-yellow-400 hover:bg-yellow-400/20 transition-colors">
+          <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 16 12 14 15 10 15 8 12 2 12" /><path d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z" /></svg>
+          Órdenes pendientes
+        </a>
+        <a href="/admin/top-books" class="inline-flex items-center gap-2 rounded-lg bg-blue-400/10 px-4 py-2.5 text-sm font-medium text-blue-400 hover:bg-blue-400/20 transition-colors">
+          <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" /></svg>
+          Top 10 del mes
+        </a>
+        <a href="/admin/storage" class="inline-flex items-center gap-2 rounded-lg bg-purple-400/10 px-4 py-2.5 text-sm font-medium text-purple-400 hover:bg-purple-400/20 transition-colors">
+          <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2" /><circle cx="8.5" cy="8.5" r="1.5" /><path d="M21 15l-5-5L5 21" /></svg>
+          Imágenes sin uso
+        </a>
       </div>
     </div>
   </div>

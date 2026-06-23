@@ -67,7 +67,7 @@
     </div>
 
     <!-- Navigation -->
-    <nav class="flex flex-col gap-0.5 flex-1 px-3 pt-5 overflow-y-auto">
+    <nav class="flex flex-col gap-0.5 px-3 pt-5 overflow-y-hidden">
       <a
         v-for="(item, index) in navItems"
         :key="item.href"
@@ -102,7 +102,7 @@
     </nav>
 
     <!-- Bottom links -->
-    <div class="pt-4 border-t border-border">
+    <div class="mt-auto pt-4 border-t border-border">
       <a
         href="/"
         @click="closeMobile"
