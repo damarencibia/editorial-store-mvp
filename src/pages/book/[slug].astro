@@ -1,6 +1,7 @@
 ---
 import StoreLayout from '../../layouts/StoreLayout.astro'
 import AddToCartButton from '../../components/store/AddToCartButton.vue'
+import ProductReviews from '../../components/store/ProductReviews.vue'
 import { supabase } from '../../lib/supabase'
 
 const { slug } = Astro.params
@@ -160,4 +161,10 @@ const formattedPrice = `$${(book.price / 100).toFixed(2)}`
       </a>
     </div>
   </article>
+
+  <ProductReviews
+    client:load
+    bookSlug={book.slug}
+    bookId={book.id}
+  />
 </StoreLayout>

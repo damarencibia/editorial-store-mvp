@@ -91,3 +91,27 @@ export interface UserProfile {
   email: string
   created_at: string
 }
+
+export interface Review {
+  id: number
+  book_id: number
+  user_id: string
+  rating: number
+  comment: string
+  is_edited: boolean
+  created_at: string
+  updated_at: string
+}
+
+export interface ReviewWithProfile extends Review {
+  profile: {
+    full_name: string | null
+    email: string | null
+  }
+}
+
+export interface ReviewStats {
+  total_reviews: number
+  avg_rating: number
+  total_bytes: number
+}

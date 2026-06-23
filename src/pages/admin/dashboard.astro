@@ -2,6 +2,7 @@
 import AdminLayout from '../../layouts/AdminLayout.astro'
 import { getServerSupabase } from '../../lib/auth'
 import { getServerProfile } from '../../lib/profiles'
+import { supabaseAdmin } from '../../lib/supabase-admin'
 
 const supabase = getServerSupabase(Astro.request, (name, value, options) => {
   Astro.cookies.set(name, value, options as any)
@@ -12,6 +13,14 @@ if (!profile || profile.role !== 'admin') return Astro.redirect('/')
 const { count: bookCount } = await supabase.from('books').select('*', { count: 'exact', head: true })
 const { count: orderCount } = await supabase.from('orders').select('*', { count: 'exact', head: true })
 const { count: customerCount } = await supabase.from('profiles').select('*', { count: 'exact', head: true })
+
+const { data: reviewStats } = await supabaseAdmin.rpc('get_review_stats')
+const reviewCount = reviewStats?.[0]?.total_reviews ?? 0
+const reviewAvg = reviewStats?.[0]?.avg_rating ?? 0
+const reviewBytes = reviewStats?.[0]?.total_bytes ?? 0
+const reviewSize = reviewBytes > 1_048_576
+  ? (reviewBytes / 1_048_576).toFixed(2) + ' MB'
+  : (reviewBytes / 1024).toFixed(2) + ' KB'
 
 const { data: paidOrders } = await supabase
   .from('orders')
@@ -44,6 +53,14 @@ const totalSales = (paidOrders ?? []).reduce((sum, o) => sum + (o.total ?? 0), 0
       <div class="rounded-lg border border-border bg-surface-2 p-4">
         <p class="text-xs text-text-muted uppercase tracking-wider font-semibold">Libros</p>
         <p class="font-heading text-2xl font-bold mt-1">{bookCount ?? 0}</p>
+      </div>
+      <div class="rounded-lg border border-border bg-surface-2 p-4">
+        <p class="text-xs text-text-muted uppercase tracking-wider font-semibold">Reseñas</p>
+        <p class="font-heading text-2xl font-bold mt-1">{reviewCount}</p>
+        <p class="text-xs text-text-dim mt-1">
+          {reviewAvg > 0 ? `${Number(reviewAvg).toFixed(1)} ⭐ promedio` : 'Sin reseñas'}
+        </p>
+        <p class="text-xs text-text-dim">{reviewSize} ocupados</p>
       </div>
     </div>
   </div>
