@@ -163,7 +163,7 @@ const formattedPrice = `$${(book.price / 100).toFixed(2)}`
   </article>
 
   <ProductReviews
-    client:load
+    client:only="vue"
     bookSlug={book.slug}
     bookId={book.id}
   />
