@@ -22,11 +22,12 @@ export function getServerSupabase(
   })
 }
 
-export async function signUp(email: string, password: string) {
+export async function signUp(email: string, password: string, fullName?: string) {
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
     options: {
+      data: { full_name: fullName },
       emailRedirectTo: `${import.meta.env.PUBLIC_SITE_URL}/auth/callback`,
     },
   })

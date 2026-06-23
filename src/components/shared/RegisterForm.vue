@@ -1,5 +1,29 @@
 <template>
   <form @submit.prevent="handleRegister" class="flex flex-col gap-4">
+    <div class="grid grid-cols-2 gap-3">
+      <div class="flex flex-col gap-1.5">
+        <label for="firstName" class="text-sm text-text-muted">Nombre</label>
+        <input
+          id="firstName"
+          type="text"
+          v-model="firstName"
+          placeholder="David"
+          required
+          class="w-full rounded-lg border border-border bg-surface-2 px-3 py-2.5 text-sm text-text-primary placeholder-text-dim transition-colors focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent/30"
+        />
+      </div>
+      <div class="flex flex-col gap-1.5">
+        <label for="lastName" class="text-sm text-text-muted">Apellido</label>
+        <input
+          id="lastName"
+          type="text"
+          v-model="lastName"
+          placeholder="García"
+          required
+          class="w-full rounded-lg border border-border bg-surface-2 px-3 py-2.5 text-sm text-text-primary placeholder-text-dim transition-colors focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent/30"
+        />
+      </div>
+    </div>
     <div class="flex flex-col gap-1.5">
       <label for="email" class="text-sm text-text-muted">Email</label>
       <div class="relative">
@@ -92,6 +116,8 @@
 import { ref } from 'vue'
 import { signUp } from '../../lib/auth'
 
+const firstName = ref('')
+const lastName = ref('')
 const email = ref('')
 const password = ref('')
 const showPassword = ref(false)
@@ -104,7 +130,8 @@ async function handleRegister() {
   success.value = ''
   loading.value = true
 
-  const { data, error: authError } = await signUp(email.value, password.value)
+  const fullName = `${firstName.value.trim()} ${lastName.value.trim()}`
+  const { data, error: authError } = await signUp(email.value, password.value, fullName)
 
   loading.value = false
 

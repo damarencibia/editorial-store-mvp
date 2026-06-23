@@ -1,6 +1,7 @@
 import type { APIRoute } from 'astro'
 import { getServerSupabase } from '../../../../../lib/auth'
 import { serializeCookie } from '../../../../../lib/utils'
+import { attachProfiles } from '../../../../../lib/reviews'
 
 export const PUT: APIRoute = async ({ params, request }) => {
   const headers = new Headers()
@@ -57,14 +58,16 @@ export const PUT: APIRoute = async ({ params, request }) => {
     .from('reviews')
     .update(updates)
     .eq('id', reviewId)
-    .select('*, profile:profiles(full_name, email)')
+    .select('*')
     .single()
 
   if (error) {
     return new Response(JSON.stringify({ error: error.message }), { status: 400, headers })
   }
 
-  return new Response(JSON.stringify(data), { status: 200, headers })
+  const enriched = await attachProfiles(supabase, [data])
+
+  return new Response(JSON.stringify(enriched[0]), { status: 200, headers })
 }
 
 export const DELETE: APIRoute = async ({ params, request }) => {

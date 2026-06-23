@@ -74,20 +74,14 @@ try {
         <div class="flex-1 sm:hidden"></div>
         <div class="sm:mt-8 pb-8 sm:pb-0 mb-16 sm:mb-0 flex flex-wrap gap-3">
           <a
-            href="#colecciones"
+            href="#tienda"
             class="inline-flex items-center gap-2 rounded-lg bg-accent px-6 py-3 text-sm font-medium text-white hover:bg-accent/90 transition-all duration-200"
           >
-            Explorar colecciones
+            Explorar la tienda
             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <line x1="5" y1="12" x2="19" y2="12" />
               <polyline points="12 5 19 12 12 19" />
             </svg>
-          </a>
-          <a
-            href="#colecciones"
-            class="inline-flex items-center gap-2 rounded-lg border border-border px-6 py-3 text-sm font-medium text-text-muted hover:text-text-primary hover:border-border-hover transition-all duration-200"
-          >
-            Ver todas
           </a>
         </div>
       </div>
@@ -102,7 +96,7 @@ try {
   )}
 
   {settings?.show_top_picks !== false && topPicks.length > 0 && (
-    <section class="mb-16">
+    <section id="tienda" class="mb-16">
       <div class="mb-6">
         <h2 class="font-heading text-2xl font-semibold">Top 10 del mes</h2>
         <p class="mt-1 text-text-muted">Nuestra selección imperdible de este mes.</p>

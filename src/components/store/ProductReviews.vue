@@ -266,10 +266,10 @@ const deletingId = ref<number | null>(null)
 const deleting = ref(false)
 const deleteError = ref('')
 
-const isAdmin = computed(() => auth.value.profile?.role === 'admin')
+const isAdmin = computed(() => auth.profile?.role === 'admin')
 const userReview = computed(() =>
-  auth.value.user
-    ? reviews.value.find(r => r.user_id === auth.value.user!.id) || null
+  auth.user
+    ? reviews.value.find(r => r.user_id === auth.user.id) || null
     : null
 )
 
@@ -381,7 +381,7 @@ async function saveAdminEdit(reviewId: number) {
   adminSaving.value = true
   adminEditError.value = ''
   try {
-    const isOwn = reviews.value.find(r => r.id === reviewId)?.user_id === auth.value.user?.id
+    const isOwn = reviews.value.find(r => r.id === reviewId)?.user_id === auth.user?.id
     const url = isOwn
       ? `/api/books/${props.bookSlug}/reviews/${reviewId}`
       : `/api/admin/reviews/${reviewId}`
@@ -414,7 +414,7 @@ async function executeDelete() {
   deleting.value = true
   deleteError.value = ''
   try {
-    const isOwn = reviews.value.find(r => r.id === deletingId.value)?.user_id === auth.value.user?.id
+    const isOwn = reviews.value.find(r => r.id === deletingId.value)?.user_id === auth.user?.id
     const url = isOwn
       ? `/api/books/${props.bookSlug}/reviews/${deletingId.value}`
       : `/api/admin/reviews/${deletingId.value}`

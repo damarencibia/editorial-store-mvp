@@ -8,6 +8,7 @@ export interface Profile {
   role: 'customer' | 'admin'
   full_name: string | null
   created_at: string
+  frozen: boolean
 }
 
 export async function getProfile(userId: string): Promise<Profile | null> {

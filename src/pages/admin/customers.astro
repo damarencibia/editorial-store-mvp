@@ -1,6 +1,6 @@
 ---
 import AdminLayout from '../../layouts/AdminLayout.astro'
-import DataTable from '../../components/admin/DataTable.vue'
+import AdminCustomersTable from '../../components/admin/AdminCustomersTable.vue'
 import { getServerSupabase } from '../../lib/auth'
 import { getServerProfile } from '../../lib/profiles'
 
@@ -14,13 +14,6 @@ const { data: customers } = await supabase
   .from('profiles')
   .select('*')
   .order('created_at', { ascending: false })
-
-const mappedCustomers = (customers ?? []).map((c) => ({
-  id: c.id,
-  email: c.email,
-  role: c.role === 'admin' ? 'Admin' : 'Cliente',
-  created_at: new Date(c.created_at).toLocaleDateString('es-ES'),
-}))
 ---
 
 <AdminLayout>
@@ -29,15 +22,9 @@ const mappedCustomers = (customers ?? []).map((c) => ({
   <div class="max-w-5xl">
     <h1 class="font-heading text-2xl font-bold tracking-tight mb-6">Clientes</h1>
 
-    <DataTable
+    <AdminCustomersTable
       client:only="vue"
-      columns={[
-        { key: 'email', label: 'Email' },
-        { key: 'role', label: 'Rol' },
-        { key: 'created_at', label: 'Registrado' },
-      ]}
-      rows={mappedCustomers}
-      emptyText="No hay clientes registrados."
+      customers={customers ?? []}
     />
   </div>
 </AdminLayout>

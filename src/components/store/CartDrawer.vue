@@ -98,7 +98,7 @@
                   <button
                     v-if="confirmingRemove !== item.bookId"
                     @click="startConfirmRemove(item.bookId)"
-                    class="cursor-pointer absolute top-2 right-2 flex h-6 w-6 items-center justify-center rounded-md text-text-dim opacity-0 group-hover:opacity-100 hover:text-red-400 hover:bg-red-400/10 transition-all"
+                    class="cursor-pointer absolute top-2 right-2 flex h-6 w-6 items-center justify-center rounded-md text-text-dim opacity-100 md:opacity-0 md:group-hover:opacity-100 hover:text-red-400 hover:bg-red-400/10 transition-all"
                   >
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                       <polyline points="3 6 5 6 21 6" />

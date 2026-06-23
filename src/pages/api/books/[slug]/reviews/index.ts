@@ -2,6 +2,7 @@ import type { APIRoute } from 'astro'
 import { getServerSupabase } from '../../../../../lib/auth'
 import { supabaseAdmin } from '../../../../../lib/supabase-admin'
 import { serializeCookie } from '../../../../../lib/utils'
+import { attachProfiles } from '../../../../../lib/reviews'
 
 export const GET: APIRoute = async ({ params }) => {
   const { slug } = params
@@ -18,7 +19,7 @@ export const GET: APIRoute = async ({ params }) => {
 
   const { data: reviews, error } = await supabaseAdmin
     .from('reviews')
-    .select('*, profile:profiles(full_name, email)')
+    .select('*')
     .eq('book_id', book.id)
     .order('created_at', { ascending: false })
 
@@ -26,13 +27,15 @@ export const GET: APIRoute = async ({ params }) => {
     return new Response(JSON.stringify({ error: error.message }), { status: 500 })
   }
 
-  const avg = reviews && reviews.length > 0
-    ? reviews.reduce((s, r: any) => s + r.rating, 0) / reviews.length
+  const enriched = await attachProfiles(supabaseAdmin, reviews)
+
+  const avg = enriched && enriched.length > 0
+    ? enriched.reduce((s: number, r: any) => s + r.rating, 0) / enriched.length
     : 0
 
   return new Response(JSON.stringify({
-    reviews: reviews ?? [],
-    total: reviews?.length ?? 0,
+    reviews: enriched ?? [],
+    total: enriched?.length ?? 0,
     avg_rating: Math.round(avg * 10) / 10,
   }), { status: 200 })
 }
@@ -89,12 +92,14 @@ export const POST: APIRoute = async ({ params, request }) => {
   const { data, error } = await supabase
     .from('reviews')
     .insert({ book_id: book.id, user_id: user.id, rating, comment })
-    .select('*, profile:profiles(full_name, email)')
+    .select('*')
     .single()
 
   if (error) {
     return new Response(JSON.stringify({ error: error.message }), { status: 400, headers })
   }
 
-  return new Response(JSON.stringify(data), { status: 201, headers })
+  const enriched = await attachProfiles(supabaseAdmin, [data])
+
+  return new Response(JSON.stringify(enriched[0]), { status: 201, headers })
 }
